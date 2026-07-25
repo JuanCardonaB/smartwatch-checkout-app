@@ -6,6 +6,7 @@ const mockRepository = (): jest.Mocked<CustomerRepository> => ({
   findById: jest.fn(),
   findByEmail: jest.fn(),
   save: jest.fn(),
+  update: jest.fn(),
 });
 
 describe('CreateCustomerUseCase', () => {

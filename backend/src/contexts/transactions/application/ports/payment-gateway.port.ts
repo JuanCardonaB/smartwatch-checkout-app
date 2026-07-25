@@ -8,7 +8,7 @@ export interface CardData {
 
 export interface PaymentResult {
   wompiId: string;
-  status: 'APPROVED' | 'DECLINED' | 'VOIDED' | 'ERROR';
+  status: 'APPROVED' | 'DECLINED' | 'VOIDED' | 'ERROR' | 'PENDING';
   cardLastFour: string;
   cardBrand: string;
 }

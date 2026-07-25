@@ -21,10 +21,16 @@ export class TransactionResponseDto {
   @ApiProperty({ example: 29900000, description: 'Product price in cents' })
   productAmountInCents: number;
 
-  @ApiProperty({ example: 300000, description: 'Base fee in cents ($3,000 COP)' })
+  @ApiProperty({
+    example: 300000,
+    description: 'Base fee in cents ($3,000 COP)',
+  })
   baseFeeInCents: number;
 
-  @ApiProperty({ example: 500000, description: 'Delivery fee in cents ($5,000 COP)' })
+  @ApiProperty({
+    example: 500000,
+    description: 'Delivery fee in cents ($5,000 COP)',
+  })
   deliveryFeeInCents: number;
 
   @ApiProperty({ example: 30700000, description: 'Total charged in cents' })
@@ -48,7 +54,10 @@ export class TransactionResponseDto {
   @ApiProperty()
   updatedAt: Date;
 
-  static fromEntity(transaction: Transaction, deliveryId: string | null = null): TransactionResponseDto {
+  static fromEntity(
+    transaction: Transaction,
+    deliveryId: string | null = null,
+  ): TransactionResponseDto {
     const dto = new TransactionResponseDto();
     dto.id = transaction.id;
     dto.reference = transaction.reference;

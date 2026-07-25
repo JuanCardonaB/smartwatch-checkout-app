@@ -13,20 +13,39 @@ export class JsonTransactionRepository implements TransactionRepository {
     if (!fs.existsSync(DATA_PATH)) return [];
     const raw = fs.readFileSync(DATA_PATH, 'utf-8');
     const parsed = JSON.parse(raw) as Array<{
-      id: string; wompiId: string | null; reference: string;
-      customerId: string; productId: string;
-      productAmountInCents: number; baseFeeInCents: number;
-      deliveryFeeInCents: number; amountInCents: number;
-      status: TransactionStatus; cardLastFour: string | null;
-      cardBrand: string | null; createdAt: string; updatedAt: string;
+      id: string;
+      wompiId: string | null;
+      reference: string;
+      customerId: string;
+      productId: string;
+      productAmountInCents: number;
+      baseFeeInCents: number;
+      deliveryFeeInCents: number;
+      amountInCents: number;
+      status: TransactionStatus;
+      cardLastFour: string | null;
+      cardBrand: string | null;
+      createdAt: string;
+      updatedAt: string;
     }>;
     return parsed.map(
-      (t) => new Transaction(
-        t.id, t.wompiId, t.reference, t.customerId, t.productId,
-        t.productAmountInCents, t.baseFeeInCents, t.deliveryFeeInCents,
-        t.amountInCents, t.status, t.cardLastFour, t.cardBrand,
-        new Date(t.createdAt), new Date(t.updatedAt),
-      ),
+      (t) =>
+        new Transaction(
+          t.id,
+          t.wompiId,
+          t.reference,
+          t.customerId,
+          t.productId,
+          t.productAmountInCents,
+          t.baseFeeInCents,
+          t.deliveryFeeInCents,
+          t.amountInCents,
+          t.status,
+          t.cardLastFour,
+          t.cardBrand,
+          new Date(t.createdAt),
+          new Date(t.updatedAt),
+        ),
     );
   }
 
@@ -49,7 +68,8 @@ export class JsonTransactionRepository implements TransactionRepository {
   async update(transaction: Transaction): Promise<Transaction> {
     const transactions = this.read();
     const index = transactions.findIndex((t) => t.id === transaction.id);
-    if (index === -1) throw new Error(`Transaction ${transaction.id} not found for update`);
+    if (index === -1)
+      throw new Error(`Transaction ${transaction.id} not found for update`);
     transactions[index] = transaction;
     this.write(transactions);
     return transaction;

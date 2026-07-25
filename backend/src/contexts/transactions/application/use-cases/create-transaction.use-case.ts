@@ -4,7 +4,10 @@ import { TransactionRepository } from '../../domain/transaction.repository';
 import { TransactionStatus } from '../../domain/transaction-status.enum';
 import { TransactionId } from '../../domain/value-objects/transaction-id.vo';
 import { TransactionReference } from '../../domain/value-objects/transaction-reference.vo';
-import { BASE_FEE_IN_CENTS, DELIVERY_FEE_IN_CENTS } from '../../domain/transaction-fees.constants';
+import {
+  BASE_FEE_IN_CENTS,
+  DELIVERY_FEE_IN_CENTS,
+} from '../../domain/transaction-fees.constants';
 import { PaymentGatewayPort, CardData } from '../ports/payment-gateway.port';
 import { ProductRepository } from '../../../products/domain/product.repository';
 import { UpsertCustomerUseCase } from '../../../customers/application/use-cases/upsert-customer.use-case';
@@ -41,7 +44,9 @@ export class CreateTransactionUseCase {
     private readonly updateStock: UpdateStockUseCase,
   ) {}
 
-  async execute(command: CreateTransactionCommand): Promise<Result<TransactionResult>> {
+  async execute(
+    command: CreateTransactionCommand,
+  ): Promise<Result<TransactionResult>> {
     // 1. Upsert customer
     const customerResult = await this.upsertCustomer.execute(command.customer);
     if (!customerResult.ok) return err(customerResult.error);
@@ -54,7 +59,8 @@ export class CreateTransactionUseCase {
 
     // 3. Calculate total amount
     const productAmountInCents = product.priceInCents;
-    const amountInCents = productAmountInCents + BASE_FEE_IN_CENTS + DELIVERY_FEE_IN_CENTS;
+    const amountInCents =
+      productAmountInCents + BASE_FEE_IN_CENTS + DELIVERY_FEE_IN_CENTS;
 
     // 4. Create PENDING transaction
     const reference = TransactionReference.generate().value;
@@ -75,10 +81,13 @@ export class CreateTransactionUseCase {
       new Date(),
     );
 
-    const savedTransaction = await this.transactionRepository.save(pendingTransaction);
+    const savedTransaction =
+      await this.transactionRepository.save(pendingTransaction);
 
     // 5. Call payment gateway (Wompi)
-    let paymentResult: Awaited<ReturnType<PaymentGatewayPort['processPayment']>>;
+    let paymentResult: Awaited<
+      ReturnType<PaymentGatewayPort['processPayment']>
+    >;
     try {
       paymentResult = await this.paymentGateway.processPayment({
         reference,
@@ -87,7 +96,12 @@ export class CreateTransactionUseCase {
         customerEmail: customer.email,
       });
     } catch {
-      const errorTransaction = savedTransaction.withWompiResult('', TransactionStatus.ERROR, '', '');
+      const errorTransaction = savedTransaction.withWompiResult(
+        '',
+        TransactionStatus.ERROR,
+        '',
+        '',
+      );
       await this.transactionRepository.update(errorTransaction);
       return err('Payment gateway error. Transaction marked as ERROR.');
     }

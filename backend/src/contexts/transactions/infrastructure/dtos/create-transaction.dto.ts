@@ -1,6 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEmail, IsNotEmpty, IsString, IsUUID, Matches, ValidateNested } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  Matches,
+  ValidateNested,
+} from 'class-validator';
 import { CardDataDto } from './card-data.dto';
 
 class CustomerInfoDto {
@@ -15,7 +22,9 @@ class CustomerInfoDto {
 
   @ApiProperty({ example: '+573001234567' })
   @IsString()
-  @Matches(/^\+?[1-9]\d{7,14}$/, { message: 'phone must be a valid phone number' })
+  @Matches(/^\+?[1-9]\d{7,14}$/, {
+    message: 'phone must be a valid phone number',
+  })
   phone: string;
 }
 
@@ -27,7 +36,9 @@ class DeliveryInfoDto {
 
   @ApiProperty({ example: '+573001234567' })
   @IsString()
-  @Matches(/^\+?[1-9]\d{7,14}$/, { message: 'phone must be a valid phone number' })
+  @Matches(/^\+?[1-9]\d{7,14}$/, {
+    message: 'phone must be a valid phone number',
+  })
   phone: string;
 
   @ApiProperty({ example: 'Calle 123 # 45-67, Apto 201' })

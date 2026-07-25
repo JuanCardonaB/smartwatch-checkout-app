@@ -1,22 +1,78 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { createHash } from 'crypto';
-import { CardData, PaymentGatewayPort, PaymentResult } from '../../application/ports/payment-gateway.port';
+import {
+  CardData,
+  PaymentGatewayPort,
+  PaymentResult,
+} from '../../application/ports/payment-gateway.port';
+
+interface WompiMerchantResponse {
+  data: {
+    presigned_acceptance: {
+      acceptance_token: string;
+      permalink: string;
+      type: string;
+    };
+  };
+}
+
+interface WompiCardTokenResponse {
+  data: {
+    id: string;
+    brand: string;
+    last_four: string;
+    bin: string;
+    exp_year: string;
+    exp_month: string;
+    card_holder: string;
+    expires_at: string;
+  };
+}
+
+interface WompiTransactionResponse {
+  data: {
+    id: string;
+    status: 'APPROVED' | 'DECLINED' | 'VOIDED' | 'ERROR' | 'PENDING';
+    reference: string;
+    amount_in_cents: number;
+    currency: string;
+    customer_email: string;
+    payment_method: {
+      type: string;
+      extra: {
+        last_four: string;
+        brand: string;
+        name: string;
+        exp_year: string;
+        exp_month: string;
+        card_holder: string;
+        external_identifier: string;
+        processor_response_code: string;
+      };
+    };
+    created_at: string;
+    finalized_at: string | null;
+  };
+}
 
 @Injectable()
 export class WompiAdapter implements PaymentGatewayPort {
-  private readonly apiUrl = process.env.WOMPI_API_URL ?? 'https://api-sandbox.co.uat.wompi.dev/v1';
+  private readonly apiUrl =
+    process.env.WOMPI_API_URL ?? 'https://api-sandbox.co.uat.wompi.dev/v1';
   private readonly publicKey = process.env.WOMPI_PUBLIC_KEY ?? '';
   private readonly privateKey = process.env.WOMPI_PRIVATE_KEY ?? '';
   private readonly integrityKey = process.env.WOMPI_INTEGRITY_KEY ?? '';
 
   private async getAcceptanceToken(): Promise<string> {
-    const { data } = await axios.get(`${this.apiUrl}/merchants/${this.publicKey}`);
+    const { data } = await axios.get<WompiMerchantResponse>(
+      `${this.apiUrl}/merchants/${this.publicKey}`,
+    );
     return data.data.presigned_acceptance.acceptance_token;
   }
 
   private async tokenizeCard(card: CardData): Promise<string> {
-    const { data } = await axios.post(
+    const { data } = await axios.post<WompiCardTokenResponse>(
       `${this.apiUrl}/tokens/cards`,
       {
         number: card.number,
@@ -46,9 +102,12 @@ export class WompiAdapter implements PaymentGatewayPort {
       this.tokenizeCard(params.card),
     ]);
 
-    const integrity = this.buildIntegrityHash(params.reference, params.amountInCents);
+    const integrity = this.buildIntegrityHash(
+      params.reference,
+      params.amountInCents,
+    );
 
-    const { data } = await axios.post(
+    const { data } = await axios.post<WompiTransactionResponse>(
       `${this.apiUrl}/transactions`,
       {
         amount_in_cents: params.amountInCents,
@@ -69,7 +128,7 @@ export class WompiAdapter implements PaymentGatewayPort {
     const txn = data.data;
     return {
       wompiId: txn.id,
-      status: txn.status as PaymentResult['status'],
+      status: txn.status,
       cardLastFour: txn.payment_method?.extra?.last_four ?? '****',
       cardBrand: txn.payment_method?.extra?.brand ?? 'UNKNOWN',
     };
