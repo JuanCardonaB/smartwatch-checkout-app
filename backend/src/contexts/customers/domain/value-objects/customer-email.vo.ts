@@ -8,7 +8,8 @@ export class CustomerEmail {
   }
 
   static from(value: string): CustomerEmail {
-    if (!EMAIL_REGEX.test(value)) throw new Error(`Invalid email: ${value}`);
-    return new CustomerEmail(value.toLowerCase().trim());
+    const trimmed = value?.trim() ?? '';
+    if (!EMAIL_REGEX.test(trimmed)) throw new Error(`Invalid email: ${value}`);
+    return new CustomerEmail(trimmed.toLowerCase());
   }
 }
