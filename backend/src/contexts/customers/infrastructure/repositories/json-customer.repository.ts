@@ -42,4 +42,13 @@ export class JsonCustomerRepository implements CustomerRepository {
     this.write(customers);
     return customer;
   }
+
+  async update(customer: Customer): Promise<Customer> {
+    const customers = this.read();
+    const index = customers.findIndex((c) => c.id === customer.id);
+    if (index === -1) throw new Error(`Customer ${customer.id} not found for update`);
+    customers[index] = customer;
+    this.write(customers);
+    return customer;
+  }
 }
