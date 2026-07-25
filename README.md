@@ -253,16 +253,16 @@ Copy `.env.example` to `.env` and fill in your credentials. **Never commit `.env
 
 ## Test Results
 
-Run the full test suite:
+From the **project root** (runs all tests across the full project):
 
 ```bash
-cd backend
 npm test
 ```
 
-Run with coverage:
+From the **backend folder** (with coverage report):
 
 ```bash
+cd backend
 npm run test:cov
 ```
 
