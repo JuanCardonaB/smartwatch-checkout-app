@@ -9,7 +9,16 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CreateProductUseCase } from '../../application/use-cases/create-product.use-case';
 import { GetProductUseCase } from '../../application/use-cases/get-product.use-case';
 import { ListProductsUseCase } from '../../application/use-cases/list-products.use-case';
@@ -30,7 +39,9 @@ export class ProductsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiCreatedResponse({ type: ProductResponseDto })
+  @ApiOperation({ summary: 'Create a product', description: 'Creates a new product in the store. Price must be provided in cents (COP).' })
+  @ApiCreatedResponse({ type: ProductResponseDto, description: 'Product created successfully' })
+  @ApiBadRequestResponse({ description: 'Invalid price or stock value' })
   async create(@Body() dto: CreateProductDto): Promise<ProductResponseDto> {
     const result = await this.createProduct.execute(dto);
     if (!result.ok) throw new HttpException(result.error, HttpStatus.BAD_REQUEST);
@@ -38,14 +49,18 @@ export class ProductsController {
   }
 
   @Get()
-  @ApiOkResponse({ type: [ProductResponseDto] })
+  @ApiOperation({ summary: 'List all products', description: 'Returns all available products with their current stock.' })
+  @ApiOkResponse({ type: [ProductResponseDto], description: 'List of products' })
   async findAll(): Promise<ProductResponseDto[]> {
     const products = await this.listProducts.execute();
     return products.map(ProductResponseDto.fromEntity);
   }
 
   @Get(':id')
-  @ApiOkResponse({ type: ProductResponseDto })
+  @ApiOperation({ summary: 'Get product by ID', description: 'Returns a single product with its current stock level.' })
+  @ApiParam({ name: 'id', description: 'Product UUID', example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' })
+  @ApiOkResponse({ type: ProductResponseDto, description: 'Product found' })
+  @ApiNotFoundResponse({ description: 'Product not found' })
   async findOne(@Param('id') id: string): Promise<ProductResponseDto> {
     const result = await this.getProduct.execute(id);
     if (!result.ok) throw new HttpException(result.error, HttpStatus.NOT_FOUND);
@@ -53,7 +68,14 @@ export class ProductsController {
   }
 
   @Patch(':id/stock')
-  @ApiOkResponse({ type: ProductResponseDto })
+  @ApiOperation({
+    summary: 'Decrement product stock',
+    description: 'Reduces the stock of a product by the specified quantity. Called internally after a successful payment.',
+  })
+  @ApiParam({ name: 'id', description: 'Product UUID', example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' })
+  @ApiOkResponse({ type: ProductResponseDto, description: 'Stock updated successfully' })
+  @ApiNotFoundResponse({ description: 'Product not found' })
+  @ApiConflictResponse({ description: 'Insufficient stock available' })
   async decrementStock(
     @Param('id') id: string,
     @Body() dto: UpdateStockDto,
