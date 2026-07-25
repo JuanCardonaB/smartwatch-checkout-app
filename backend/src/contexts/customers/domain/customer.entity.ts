@@ -6,4 +6,8 @@ export class Customer {
     public readonly phone: string,
     public readonly createdAt: Date,
   ) {}
+
+  withUpdatedInfo(name: string, phone: string): Customer {
+    return new Customer(this.id, name, this.email, phone, this.createdAt);
+  }
 }
