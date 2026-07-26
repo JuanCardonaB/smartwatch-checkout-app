@@ -13,7 +13,7 @@ const validCommand = {
   name: 'Smartwatch Pro X1',
   description: 'A great smartwatch',
   priceInCents: 29900000,
-  imageUrl: 'https://example.com/img.png',
+  imageUrls: ['https://example.com/img.png'],
   stock: 10,
 };
 
@@ -39,18 +39,19 @@ describe('CreateProductUseCase', () => {
     expect(repository.save).toHaveBeenCalledTimes(1);
   });
 
-  it('trims name, description and imageUrl', async () => {
+  it('trims name, description and imageUrls', async () => {
     const result = await useCase.execute({
       ...validCommand,
       name: '  Smartwatch  ',
       description: '  desc  ',
-      imageUrl: '  https://example.com/img.png  ',
+      imageUrls: ['  https://example.com/img.png  '],
     });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.name).toBe('Smartwatch');
     expect(result.value.description).toBe('desc');
+    expect(result.value.imageUrls).toEqual(['https://example.com/img.png']);
   });
 
   it('returns error for invalid price (zero)', async () => {

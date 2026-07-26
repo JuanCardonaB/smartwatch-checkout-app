@@ -86,8 +86,10 @@ export default function ProductPage() {
 
   const fallbackImage =
     "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&fit=crop";
-  const imageUrl = product.imageUrl || fallbackImage;
-  const images = [imageUrl, imageUrl, imageUrl];
+  const images =
+    product.imageUrls && product.imageUrls.length > 0
+      ? product.imageUrls
+      : [fallbackImage];
 
   return (
     <div className="relative h-screen w-full overflow-hidden">

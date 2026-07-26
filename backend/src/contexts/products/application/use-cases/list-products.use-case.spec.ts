@@ -20,8 +20,8 @@ describe('ListProductsUseCase', () => {
 
   it('returns all products', async () => {
     const products = [
-      new Product('id-1', 'Smartwatch', 'desc', 29900000, 'https://img.com', 10, new Date()),
-      new Product('id-2', 'Band', 'desc', 9900000, 'https://img2.com', 5, new Date()),
+      new Product('id-1', 'Smartwatch', 'desc', 29900000, ['https://img.com'], 10, new Date()),
+      new Product('id-2', 'Band', 'desc', 9900000, ['https://img2.com'], 5, new Date()),
     ];
     repository.findAll.mockResolvedValue(products);
 

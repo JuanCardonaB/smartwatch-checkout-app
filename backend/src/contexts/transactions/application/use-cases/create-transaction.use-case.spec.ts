@@ -17,7 +17,7 @@ const makeCustomer = () =>
   new Customer('cust-1', 'Juan Cardona', 'juan@example.com', '+573001234567', new Date());
 
 const makeProduct = (stock = 5) =>
-  new Product('prod-1', 'Smartwatch Pro X1', 'desc', 29900000, 'img.jpg', stock, new Date());
+  new Product('prod-1', 'Smartwatch Pro X1', 'desc', 29900000, ['img.jpg'], stock, new Date());
 
 const makeDelivery = () =>
   new Delivery('del-1', 'txn-1', 'cust-1', 'Juan Cardona', '+573001234567', 'Calle 1', 'Bogotá', 'Cundinamarca', new Date());

@@ -14,8 +14,15 @@ export class ProductResponseDto {
   @ApiProperty({ example: 29900000, description: 'Price in cents (COP)' })
   priceInCents: number;
 
-  @ApiProperty({ example: 'https://example.com/smartwatch.png' })
-  imageUrl: string;
+  @ApiProperty({
+    example: [
+      'https://example.com/smartwatch-front.png',
+      'https://example.com/smartwatch-side.png',
+    ],
+    description: 'List of image URLs for the product',
+    type: [String],
+  })
+  imageUrls: string[];
 
   @ApiProperty({ example: 10 })
   stock: number;
@@ -29,7 +36,7 @@ export class ProductResponseDto {
     dto.name = product.name;
     dto.description = product.description;
     dto.priceInCents = product.priceInCents;
-    dto.imageUrl = product.imageUrl;
+    dto.imageUrls = product.imageUrls;
     dto.stock = product.stock;
     dto.createdAt = product.createdAt;
     return dto;

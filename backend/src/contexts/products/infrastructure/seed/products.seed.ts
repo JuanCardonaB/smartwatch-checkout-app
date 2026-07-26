@@ -8,7 +8,10 @@ const SEED_PRODUCT: Omit<Product, 'withStock'> = {
   description:
     'Premium smartwatch with health monitoring, GPS, heart rate sensor, and 7-day battery life. Water resistant up to 50m.',
   priceInCents: 29900000,
-  imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800',
+  imageUrls: [
+    'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800',
+    'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=800',
+  ],
   stock: 10,
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
 };
@@ -26,7 +29,7 @@ export class ProductsSeed implements OnModuleInit {
       SEED_PRODUCT.name,
       SEED_PRODUCT.description,
       SEED_PRODUCT.priceInCents,
-      SEED_PRODUCT.imageUrl,
+      SEED_PRODUCT.imageUrls,
       SEED_PRODUCT.stock,
       SEED_PRODUCT.createdAt,
     );

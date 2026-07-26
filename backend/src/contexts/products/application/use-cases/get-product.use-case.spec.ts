@@ -9,7 +9,7 @@ const mockRepository = (): jest.Mocked<ProductRepository> => ({
   update: jest.fn(),
 });
 
-const mockProduct = new Product('id-1', 'Smartwatch', 'desc', 29900000, 'https://img.com', 10, new Date());
+const mockProduct = new Product('id-1', 'Smartwatch', 'desc', 29900000, ['https://img.com'], 10, new Date());
 
 describe('GetProductUseCase', () => {
   let useCase: GetProductUseCase;

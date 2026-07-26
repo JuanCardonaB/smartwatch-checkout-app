@@ -9,7 +9,7 @@ export interface CreateProductCommand {
   name: string;
   description: string;
   priceInCents: number;
-  imageUrl: string;
+  imageUrls: string[];
   stock: number;
 }
 
@@ -31,7 +31,7 @@ export class CreateProductUseCase {
       command.name.trim(),
       command.description.trim(),
       command.priceInCents,
-      command.imageUrl.trim(),
+      command.imageUrls.map((url) => url.trim()),
       command.stock,
       new Date(),
     );

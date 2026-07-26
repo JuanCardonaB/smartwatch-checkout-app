@@ -13,7 +13,7 @@ const mockProduct = new Product(
   'Smartwatch Pro X1',
   'desc',
   29900000,
-  'https://img.com',
+  ['https://img.com'],
   10,
   new Date('2026-01-01'),
 );
@@ -51,7 +51,7 @@ describe('ProductsController', () => {
         name: 'Smartwatch Pro X1',
         description: 'desc',
         priceInCents: 29900000,
-        imageUrl: 'https://img.com',
+        imageUrls: ['https://img.com'],
         stock: 10,
       });
 
@@ -67,7 +67,7 @@ describe('ProductsController', () => {
           name: 'X',
           description: 'X',
           priceInCents: 0,
-          imageUrl: 'https://img.com',
+          imageUrls: ['https://img.com'],
           stock: 1,
         }),
       ).rejects.toThrow(new HttpException('Price must be a positive integer in cents', HttpStatus.BAD_REQUEST));
