@@ -54,6 +54,10 @@ export class JsonTransactionRepository implements TransactionRepository {
     fs.writeFileSync(DATA_PATH, JSON.stringify(transactions, null, 2), 'utf-8');
   }
 
+  async findAll(): Promise<Transaction[]> {
+    return this.read().slice().reverse();
+  }
+
   async findById(id: string): Promise<Transaction | null> {
     return this.read().find((t) => t.id === id) ?? null;
   }

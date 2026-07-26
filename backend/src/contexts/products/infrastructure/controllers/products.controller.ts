@@ -1,52 +1,57 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
-  HttpCode,
   HttpException,
   HttpStatus,
   Param,
   Patch,
+  Put,
   Post,
+  Req,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { randomUUID } from 'crypto';
+import type { Request } from 'express';
 import {
   ApiBadRequestResponse,
+  ApiBody,
   ApiConflictResponse,
-  ApiCreatedResponse,
+  ApiConsumes,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateProductUseCase } from '../../application/use-cases/create-product.use-case';
 import { GetProductUseCase } from '../../application/use-cases/get-product.use-case';
 import { ListProductsUseCase } from '../../application/use-cases/list-products.use-case';
+import { UpdateProductUseCase } from '../../application/use-cases/update-product.use-case';
 import { UpdateStockUseCase } from '../../application/use-cases/update-stock.use-case';
-import { CreateProductDto } from '../dtos/create-product.dto';
+import { UpdateProductDto } from '../dtos/update-product.dto';
 import { UpdateStockDto } from '../dtos/update-stock.dto';
 import { ProductResponseDto } from '../dtos/product-response.dto';
+import {
+  ALLOWED_IMAGE_MIME,
+  MAX_UPLOAD_BYTES,
+  UPLOADS_DIR,
+  UPLOADS_ROUTE,
+} from '../uploads.config';
 
 @ApiTags('products')
 @Controller('products')
 export class ProductsController {
   constructor(
-    private readonly createProduct: CreateProductUseCase,
     private readonly listProducts: ListProductsUseCase,
     private readonly getProduct: GetProductUseCase,
+    private readonly updateProduct: UpdateProductUseCase,
     private readonly updateStock: UpdateStockUseCase,
   ) {}
-
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a product', description: 'Creates a new product in the store. Price must be provided in cents (COP).' })
-  @ApiCreatedResponse({ type: ProductResponseDto, description: 'Product created successfully' })
-  @ApiBadRequestResponse({ description: 'Invalid price or stock value' })
-  async create(@Body() dto: CreateProductDto): Promise<ProductResponseDto> {
-    const result = await this.createProduct.execute(dto);
-    if (!result.ok) throw new HttpException(result.error, HttpStatus.BAD_REQUEST);
-    return ProductResponseDto.fromEntity(result.value);
-  }
 
   @Get()
   @ApiOperation({ summary: 'List all products', description: 'Returns all available products with their current stock.' })
@@ -54,6 +59,52 @@ export class ProductsController {
   async findAll(): Promise<ProductResponseDto[]> {
     const products = await this.listProducts.execute();
     return products.map(ProductResponseDto.fromEntity);
+  }
+
+  @Post('images')
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: diskStorage({
+        destination: UPLOADS_DIR,
+        filename: (_req, file, cb) => {
+          cb(null, `${randomUUID()}${extname(file.originalname).toLowerCase()}`);
+        },
+      }),
+      fileFilter: (_req, file, cb) => {
+        if (!ALLOWED_IMAGE_MIME.test(file.mimetype)) {
+          cb(new BadRequestException('Only image files are allowed'), false);
+          return;
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: MAX_UPLOAD_BYTES },
+    }),
+  )
+  @ApiOperation({
+    summary: 'Upload product images',
+    description: 'Uploads one or more image files and returns their public URLs.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        files: { type: 'array', items: { type: 'string', format: 'binary' } },
+      },
+    },
+  })
+  @ApiOkResponse({ description: 'Uploaded image URLs', schema: { example: { urls: ['http://localhost:3000/uploads/uuid.png'] } } })
+  @ApiBadRequestResponse({ description: 'No files or invalid file type' })
+  uploadImages(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Req() req: Request,
+  ): { urls: string[] } {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('No files were uploaded');
+    }
+    const base = `${req.protocol}://${req.get('host')}`;
+    const urls = files.map((file) => `${base}${UPLOADS_ROUTE}/${file.filename}`);
+    return { urls };
   }
 
   @Get(':id')
@@ -64,6 +115,27 @@ export class ProductsController {
   async findOne(@Param('id') id: string): Promise<ProductResponseDto> {
     const result = await this.getProduct.execute(id);
     if (!result.ok) throw new HttpException(result.error, HttpStatus.NOT_FOUND);
+    return ProductResponseDto.fromEntity(result.value);
+  }
+
+  @Put(':id')
+  @ApiOperation({
+    summary: 'Update a product',
+    description: 'Updates all editable fields of a product. Price must be provided in cents (COP).',
+  })
+  @ApiParam({ name: 'id', description: 'Product UUID', example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' })
+  @ApiOkResponse({ type: ProductResponseDto, description: 'Product updated successfully' })
+  @ApiBadRequestResponse({ description: 'Invalid price or stock value' })
+  @ApiNotFoundResponse({ description: 'Product not found' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateProductDto,
+  ): Promise<ProductResponseDto> {
+    const result = await this.updateProduct.execute({ id, ...dto });
+    if (!result.ok) {
+      const status = result.error === 'Product not found' ? HttpStatus.NOT_FOUND : HttpStatus.BAD_REQUEST;
+      throw new HttpException(result.error, status);
+    }
     return ProductResponseDto.fromEntity(result.value);
   }
 

@@ -19,6 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateCustomerUseCase } from '../../application/use-cases/create-customer.use-case';
 import { GetCustomerUseCase } from '../../application/use-cases/get-customer.use-case';
+import { ListCustomersUseCase } from '../../application/use-cases/list-customers.use-case';
 import { CreateCustomerDto } from '../dtos/create-customer.dto';
 import { CustomerResponseDto } from '../dtos/customer-response.dto';
 
@@ -28,7 +29,16 @@ export class CustomersController {
   constructor(
     private readonly createCustomer: CreateCustomerUseCase,
     private readonly getCustomer: GetCustomerUseCase,
+    private readonly listCustomers: ListCustomersUseCase,
   ) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List all customers', description: 'Returns all registered customers ordered by most recent first.' })
+  @ApiOkResponse({ type: [CustomerResponseDto], description: 'List of customers' })
+  async findAll(): Promise<CustomerResponseDto[]> {
+    const customers = await this.listCustomers.execute();
+    return customers.map(CustomerResponseDto.fromEntity);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

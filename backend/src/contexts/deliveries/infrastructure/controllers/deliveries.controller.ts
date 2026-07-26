@@ -20,6 +20,7 @@ import {
 import { CreateDeliveryUseCase } from '../../application/use-cases/create-delivery.use-case';
 import { GetDeliveryUseCase } from '../../application/use-cases/get-delivery.use-case';
 import { GetDeliveryByTransactionUseCase } from '../../application/use-cases/get-delivery-by-transaction.use-case';
+import { ListDeliveriesUseCase } from '../../application/use-cases/list-deliveries.use-case';
 import { CreateDeliveryDto } from '../dtos/create-delivery.dto';
 import { DeliveryResponseDto } from '../dtos/delivery-response.dto';
 
@@ -30,7 +31,16 @@ export class DeliveriesController {
     private readonly createDelivery: CreateDeliveryUseCase,
     private readonly getDelivery: GetDeliveryUseCase,
     private readonly getDeliveryByTransaction: GetDeliveryByTransactionUseCase,
+    private readonly listDeliveries: ListDeliveriesUseCase,
   ) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List all deliveries', description: 'Returns all deliveries ordered by most recent first.' })
+  @ApiOkResponse({ type: [DeliveryResponseDto], description: 'List of deliveries' })
+  async findAll(): Promise<DeliveryResponseDto[]> {
+    const deliveries = await this.listDeliveries.execute();
+    return deliveries.map(DeliveryResponseDto.fromEntity);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

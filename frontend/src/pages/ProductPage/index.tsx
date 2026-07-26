@@ -20,9 +20,10 @@ export default function ProductPage() {
   const dragStartHeight = useRef<number>(SNAP_POINTS[0]);
   const swipeStartX = useRef<number | null>(null);
 
+  // Always refresh on mount so newly edited images/data show up.
   useEffect(() => {
-    if (!product) dispatch(fetchProduct());
-  }, [dispatch, product]);
+    dispatch(fetchProduct());
+  }, [dispatch]);
 
   function handleBuy() {
     dispatch(setStep(2));
@@ -86,8 +87,12 @@ export default function ProductPage() {
 
   const fallbackImage =
     "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&fit=crop";
-  const imageUrl = product.imageUrl || fallbackImage;
-  const images = [imageUrl, imageUrl, imageUrl];
+  const images =
+    product.imageUrls && product.imageUrls.length > 0
+      ? product.imageUrls
+      : [fallbackImage];
+  // Guard against a stale index if the image count changed.
+  const currentImage = Math.min(activeImage, images.length - 1);
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
@@ -107,7 +112,7 @@ export default function ProductPage() {
             src={src}
             alt={`${product.name} ${i + 1}`}
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
-              i === activeImage ? "opacity-100" : "opacity-0"
+              i === currentImage ? "opacity-100" : "opacity-0"
             }`}
             draggable={false}
           />
@@ -123,7 +128,7 @@ export default function ProductPage() {
               key={i}
               onClick={() => setActiveImage(i)}
               className={`h-2 rounded-full transition-all duration-300 ${
-                i === activeImage ? "bg-white w-5" : "bg-white/55 w-2"
+                i === currentImage ? "bg-white w-5" : "bg-white/55 w-2"
               }`}
             />
           ))}

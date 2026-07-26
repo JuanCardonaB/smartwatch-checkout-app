@@ -10,7 +10,7 @@ const mockRepository = (): jest.Mocked<ProductRepository> => ({
 });
 
 const makeProduct = (stock: number) =>
-  new Product('id-1', 'Smartwatch', 'desc', 29900000, 'https://img.com', stock, new Date());
+  new Product('id-1', 'Smartwatch', 'desc', 29900000, ['https://img.com'], stock, new Date());
 
 describe('UpdateStockUseCase', () => {
   let useCase: UpdateStockUseCase;

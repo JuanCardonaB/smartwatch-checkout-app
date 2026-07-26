@@ -46,6 +46,10 @@ export class JsonDeliveryRepository implements DeliveryRepository {
     fs.writeFileSync(DATA_PATH, JSON.stringify(deliveries, null, 2), 'utf-8');
   }
 
+  async findAll(): Promise<Delivery[]> {
+    return this.read().slice().reverse();
+  }
+
   async findById(id: string): Promise<Delivery | null> {
     return this.read().find((d) => d.id === id) ?? null;
   }
