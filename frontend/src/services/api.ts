@@ -41,8 +41,26 @@ export const transactionsApi = {
     productId: string;
     card: CardForm;
     delivery: DeliveryForm;
-  }): Promise<TransactionResult> =>
-    api.post<TransactionResult>('/transactions', payload).then((r) => r.data),
+  }): Promise<TransactionResult> => {
+    const stripSpaces = (s: string) => s.replace(/\s/g, '');
+    const body = {
+      customer: {
+        ...payload.customer,
+        phone: stripSpaces(payload.customer.phone),
+      },
+      productId: payload.productId,
+      card: {
+        ...payload.card,
+        number: stripSpaces(payload.card.number),
+        expYear: payload.card.expYear.length === 2 ? `20${payload.card.expYear}` : payload.card.expYear,
+      },
+      delivery: {
+        ...payload.delivery,
+        phone: stripSpaces(payload.delivery.phone),
+      },
+    };
+    return api.post<TransactionResult>('/transactions', body).then((r) => r.data);
+  },
 
   getById: (id: string): Promise<TransactionResult> =>
     api.get<TransactionResult>(`/transactions/${id}`).then((r) => r.data),
