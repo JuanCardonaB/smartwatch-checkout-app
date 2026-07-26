@@ -126,11 +126,44 @@ export class WompiAdapter implements PaymentGatewayPort {
     );
 
     const txn = data.data;
+    const finalTxn = await this.pollUntilFinal(txn.id, txn.status);
     return {
-      wompiId: txn.id,
-      status: txn.status,
-      cardLastFour: txn.payment_method?.extra?.last_four ?? '****',
-      cardBrand: txn.payment_method?.extra?.brand ?? 'UNKNOWN',
+      wompiId: finalTxn.id,
+      status: finalTxn.status,
+      cardLastFour: finalTxn.payment_method?.extra?.last_four ?? '****',
+      cardBrand: finalTxn.payment_method?.extra?.brand ?? 'UNKNOWN',
     };
+  }
+
+  private async pollUntilFinal(
+    wompiId: string,
+    initialStatus: WompiTransactionResponse['data']['status'],
+    maxWaitMs = 10000,
+    intervalMs = 1000,
+  ): Promise<WompiTransactionResponse['data']> {
+    if (initialStatus !== 'PENDING') {
+      const { data } = await axios.get<WompiTransactionResponse>(
+        `${this.apiUrl}/transactions/${wompiId}`,
+        { headers: { Authorization: `Bearer ${this.privateKey}` } },
+      );
+      return data.data;
+    }
+
+    const deadline = Date.now() + maxWaitMs;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, intervalMs));
+      const { data } = await axios.get<WompiTransactionResponse>(
+        `${this.apiUrl}/transactions/${wompiId}`,
+        { headers: { Authorization: `Bearer ${this.privateKey}` } },
+      );
+      if (data.data.status !== 'PENDING') return data.data;
+    }
+
+    // Return last known state after timeout (still PENDING)
+    const { data } = await axios.get<WompiTransactionResponse>(
+      `${this.apiUrl}/transactions/${wompiId}`,
+      { headers: { Authorization: `Bearer ${this.privateKey}` } },
+    );
+    return data.data;
   }
 }

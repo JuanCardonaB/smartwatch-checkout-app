@@ -54,12 +54,26 @@ const mockTransactionResponse = {
   },
 };
 
+// The poll response is what pollUntilFinal returns when it re-fetches the transaction
+const mockPollResponse = {
+  data: {
+    data: {
+      ...mockTransactionResponse.data.data,
+    },
+  },
+};
+
 describe('WompiAdapter', () => {
   let adapter: WompiAdapter;
 
   beforeEach(() => {
     adapter = new WompiAdapter();
-    mockedAxios.get = jest.fn().mockResolvedValue(mockMerchantResponse);
+    // axios.get is called twice:
+    // 1. getAcceptanceToken() -> merchant endpoint
+    // 2. pollUntilFinal() -> transaction endpoint (since status is APPROVED, not PENDING, it fetches once)
+    mockedAxios.get = jest.fn()
+      .mockResolvedValueOnce(mockMerchantResponse)
+      .mockResolvedValueOnce(mockPollResponse);
     mockedAxios.post = jest.fn()
       .mockResolvedValueOnce(mockCardTokenResponse)
       .mockResolvedValueOnce(mockTransactionResponse);
@@ -107,10 +121,11 @@ describe('WompiAdapter', () => {
     expect(txnCall['signature']).toBe(expected);
   });
 
-  it('fetches acceptance token and card token in parallel', async () => {
+  it('fetches acceptance token (get) plus polls transaction (get) — 2 get calls total', async () => {
     await adapter.processPayment({ reference: 'SW-ref', amountInCents: 30700000, card, customerEmail: 'j@e.com' });
 
-    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+    // 1 GET for merchant acceptance token + 1 GET for pollUntilFinal
+    expect(mockedAxios.get).toHaveBeenCalledTimes(2);
     expect(mockedAxios.post).toHaveBeenCalledTimes(2);
   });
 
@@ -128,6 +143,13 @@ describe('WompiAdapter', () => {
     expect(txnConfig.headers['Authorization']).toBe('Bearer prv_test_key');
   });
 
+  it('uses private key for poll GET request header', async () => {
+    await adapter.processPayment({ reference: 'SW-ref', amountInCents: 30700000, card, customerEmail: 'j@e.com' });
+
+    const pollConfig = mockedAxios.get.mock.calls[1][1] as { headers: Record<string, string> };
+    expect(pollConfig.headers['Authorization']).toBe('Bearer prv_test_key');
+  });
+
   it('falls back to **** and UNKNOWN when payment_method extra is missing', async () => {
     const responseWithoutExtra = {
       data: {
@@ -137,6 +159,16 @@ describe('WompiAdapter', () => {
         },
       },
     };
+    const pollWithoutExtra = {
+      data: {
+        data: {
+          ...responseWithoutExtra.data.data,
+        },
+      },
+    };
+    mockedAxios.get = jest.fn()
+      .mockResolvedValueOnce(mockMerchantResponse)
+      .mockResolvedValueOnce(pollWithoutExtra);
     mockedAxios.post = jest.fn()
       .mockResolvedValueOnce(mockCardTokenResponse)
       .mockResolvedValueOnce(responseWithoutExtra);
@@ -146,4 +178,39 @@ describe('WompiAdapter', () => {
     expect(result.cardLastFour).toBe('****');
     expect(result.cardBrand).toBe('UNKNOWN');
   });
+
+  it('polls multiple times when initial status is PENDING and resolves on final status', async () => {
+    const pendingTxnResponse = {
+      data: {
+        data: {
+          ...mockTransactionResponse.data.data,
+          status: 'PENDING' as const,
+        },
+      },
+    };
+    const approvedPollResponse = {
+      data: {
+        data: {
+          ...mockTransactionResponse.data.data,
+          status: 'APPROVED' as const,
+        },
+      },
+    };
+
+    mockedAxios.get = jest.fn()
+      .mockResolvedValueOnce(mockMerchantResponse)
+      .mockResolvedValueOnce(approvedPollResponse); // first poll returns APPROVED
+    mockedAxios.post = jest.fn()
+      .mockResolvedValueOnce(mockCardTokenResponse)
+      .mockResolvedValueOnce(pendingTxnResponse);
+
+    const result = await adapter.processPayment({
+      reference: 'SW-ref',
+      amountInCents: 30700000,
+      card,
+      customerEmail: 'j@e.com',
+    });
+
+    expect(result.status).toBe('APPROVED');
+  }, 15000);
 });

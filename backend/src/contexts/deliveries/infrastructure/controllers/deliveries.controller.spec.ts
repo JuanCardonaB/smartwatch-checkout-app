@@ -4,6 +4,7 @@ import { DeliveriesController } from './deliveries.controller';
 import { CreateDeliveryUseCase } from '../../application/use-cases/create-delivery.use-case';
 import { GetDeliveryUseCase } from '../../application/use-cases/get-delivery.use-case';
 import { GetDeliveryByTransactionUseCase } from '../../application/use-cases/get-delivery-by-transaction.use-case';
+import { ListDeliveriesUseCase } from '../../application/use-cases/list-deliveries.use-case';
 import { Delivery } from '../../domain/delivery.entity';
 import { DeliveryStatus } from '../../domain/delivery-status.enum';
 import { ok, err } from '../../../../shared/result';
@@ -26,6 +27,7 @@ describe('DeliveriesController', () => {
   let createDelivery: jest.Mocked<CreateDeliveryUseCase>;
   let getDelivery: jest.Mocked<GetDeliveryUseCase>;
   let getDeliveryByTransaction: jest.Mocked<GetDeliveryByTransactionUseCase>;
+  let listDeliveries: jest.Mocked<ListDeliveriesUseCase>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -34,6 +36,7 @@ describe('DeliveriesController', () => {
         { provide: CreateDeliveryUseCase, useValue: { execute: jest.fn() } },
         { provide: GetDeliveryUseCase, useValue: { execute: jest.fn() } },
         { provide: GetDeliveryByTransactionUseCase, useValue: { execute: jest.fn() } },
+        { provide: ListDeliveriesUseCase, useValue: { execute: jest.fn() } },
       ],
     }).compile();
 
@@ -41,6 +44,26 @@ describe('DeliveriesController', () => {
     createDelivery = module.get(CreateDeliveryUseCase);
     getDelivery = module.get(GetDeliveryUseCase);
     getDeliveryByTransaction = module.get(GetDeliveryByTransactionUseCase);
+    listDeliveries = module.get(ListDeliveriesUseCase);
+  });
+
+  describe('GET /deliveries', () => {
+    it('returns list of deliveries', async () => {
+      listDeliveries.execute.mockResolvedValue([mockDelivery]);
+
+      const result = await controller.findAll();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('delivery-uuid-1');
+    });
+
+    it('returns empty list when no deliveries', async () => {
+      listDeliveries.execute.mockResolvedValue([]);
+
+      const result = await controller.findAll();
+
+      expect(result).toHaveLength(0);
+    });
   });
 
   describe('POST /deliveries', () => {
