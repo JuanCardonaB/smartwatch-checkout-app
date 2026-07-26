@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
 import type {
   Product,
   CustomerForm,
@@ -7,8 +7,8 @@ import type {
   DeliveryForm,
   TransactionResult,
   CheckoutStep,
-} from '../../types';
-import { productsApi, transactionsApi } from '../../services/api';
+} from "../../types";
+import { productsApi, transactionsApi } from "../../services/api";
 
 interface CheckoutState {
   product: Product | null;
@@ -21,15 +21,17 @@ interface CheckoutState {
   error: string | null;
 }
 
-const STORAGE_KEY = 'checkout_state';
+const STORAGE_KEY = "checkout_state";
 
 function loadFromStorage(): Partial<CheckoutState> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as Partial<CheckoutState>;
-    // card is never persisted — sensitive data
     delete parsed.card;
+    // Discard cached product if it doesn't have the colors structure
+    delete parsed.product;
+
     return parsed;
   } catch {
     return {};
@@ -58,26 +60,26 @@ const initialState: CheckoutState = {
 };
 
 export const fetchProduct = createAsyncThunk(
-  'checkout/fetchProduct',
+  "checkout/fetchProduct",
   async (_, { rejectWithValue }) => {
     try {
       const products = await productsApi.getAll();
-      if (!products.length) return rejectWithValue('No products available');
+      if (!products.length) return rejectWithValue("No products available");
       return products[0];
     } catch {
-      return rejectWithValue('Failed to load product');
+      return rejectWithValue("Failed to load product");
     }
   },
 );
 
 export const submitPayment = createAsyncThunk(
-  'checkout/submitPayment',
+  "checkout/submitPayment",
   async (_, { getState, rejectWithValue }) => {
     const { checkout } = getState() as { checkout: CheckoutState };
     const { product, customer, card, delivery } = checkout;
 
     if (!product || !customer || !card || !delivery) {
-      return rejectWithValue('Missing checkout data');
+      return rejectWithValue("Missing checkout data");
     }
 
     try {
@@ -90,13 +92,13 @@ export const submitPayment = createAsyncThunk(
       return result;
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
-      return rejectWithValue(err?.response?.data?.message ?? 'Payment failed');
+      return rejectWithValue(err?.response?.data?.message ?? "Payment failed");
     }
   },
 );
 
 const checkoutSlice = createSlice({
-  name: 'checkout',
+  name: "checkout",
   initialState,
   reducers: {
     setStep(state, action: PayloadAction<CheckoutStep>) {
@@ -162,7 +164,13 @@ const checkoutSlice = createSlice({
   },
 });
 
-export const { setStep, setCustomer, setCard, setDelivery, resetCheckout, clearError } =
-  checkoutSlice.actions;
+export const {
+  setStep,
+  setCustomer,
+  setCard,
+  setDelivery,
+  resetCheckout,
+  clearError,
+} = checkoutSlice.actions;
 
 export default checkoutSlice.reducer;
