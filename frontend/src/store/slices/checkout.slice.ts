@@ -117,6 +117,11 @@ const checkoutSlice = createSlice({
       state.delivery = action.payload;
       saveToStorage(state);
     },
+    setTransaction(state, action: PayloadAction<TransactionResult>) {
+      state.transaction = action.payload;
+      state.step = 4;
+      saveToStorage(state);
+    },
     resetCheckout(state) {
       state.step = 1;
       state.customer = null;
@@ -169,6 +174,7 @@ export const {
   setCustomer,
   setCard,
   setDelivery,
+  setTransaction,
   resetCheckout,
   clearError,
 } = checkoutSlice.actions;

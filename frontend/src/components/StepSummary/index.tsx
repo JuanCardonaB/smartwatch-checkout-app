@@ -1,8 +1,229 @@
-// Step 3: order summary with totals (backdrop component)
-export default function StepSummary() {
+import { useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../../store';
+import {
+  setStep,
+  setTransaction,
+} from '../../store/slices/checkout.slice';
+import type { TransactionResult } from '../../types';
+
+const BASE_FEE = 300000;   // $3,000 COP
+const DELIVERY_FEE = 500000; // $5,000 COP
+
+function fmt(cents: number) {
+  return `$${(cents / 100).toLocaleString('es-CO')} COP`;
+}
+
+function detectBrand(num: string): 'visa' | 'mastercard' | null {
+  const n = (num ?? '').replace(/\s/g, '');
+  if (/^4/.test(n)) return 'visa';
+  if (/^(5[1-5]|2[2-7])/.test(n)) return 'mastercard';
+  return null;
+}
+
+function VisaChip() {
   return (
-    <div className="w-full max-w-sm">
-      <p className="text-center text-gray-400">Step 3 — Summary (coming soon)</p>
+    <svg className="h-5 w-8" viewBox="0 0 780 500" xmlns="http://www.w3.org/2000/svg">
+      <rect width="780" height="500" rx="40" fill="#1a1f71" />
+      <text x="390" y="370" textAnchor="middle" fill="white" fontSize="290"
+        fontFamily="Arial, sans-serif" fontWeight="bold" fontStyle="italic">
+        VISA
+      </text>
+    </svg>
+  );
+}
+
+function McChip() {
+  return (
+    <svg className="h-5 w-8" viewBox="0 0 152 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="52" cy="50" r="48" fill="#EB001B" />
+      <circle cx="100" cy="50" r="48" fill="#F79E1B" />
+      <path d="M76 10.5C87.2 19 95 32.7 95 48s-7.8 29-19 37.5C64.8 77 57 63.3 57 48S64.8 19 76 10.5z" fill="#FF5F00" />
+    </svg>
+  );
+}
+
+export default function StepSummary() {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { product, card, customer, delivery } = useAppSelector((s) => s.checkout);
+
+  if (!product || !card || !customer || !delivery) {
+    dispatch(setStep(2));
+    return null;
+  }
+
+  const productAmount = product.priceInCents;
+  const total = productAmount + BASE_FEE + DELIVERY_FEE;
+  const brand = detectBrand(card.number);
+  const lastFour = card.number.replace(/\s/g, '').slice(-4);
+  const fallback = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&fit=crop';
+  const heroImage = product.imageUrls?.[0] ?? fallback;
+
+  function handleBack() {
+    dispatch(setStep(2));
+  }
+
+  function handleConfirm() {
+    // Mock transaction — will be replaced with real Wompi call
+    const mock: TransactionResult = {
+      id: crypto.randomUUID(),
+      reference: `REF-${Date.now()}`,
+      wompiId: null,
+      customerId: 'mock-customer',
+      productId: product!.id,
+      productAmountInCents: productAmount,
+      baseFeeInCents: BASE_FEE,
+      deliveryFeeInCents: DELIVERY_FEE,
+      amountInCents: total,
+      status: 'APPROVED',
+      cardLastFour: lastFour,
+      cardBrand: brand,
+      deliveryId: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    dispatch(setTransaction(mock));
+    navigate('/checkout');
+  }
+
+  return (
+    /* ── BACKDROP CONTAINER ── */
+    <div className="fixed inset-0 flex flex-col overflow-hidden">
+
+      {/* ── BACK LAYER ── product context fills the top ~35% */}
+      <div
+        className="relative flex-shrink-0"
+        style={{ height: '38%' }}
+      >
+        <img
+          src={heroImage}
+          alt={product.name}
+          className="absolute inset-0 h-full w-full object-cover"
+          draggable={false}
+        />
+        {/* gradient overlay so product name reads well */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/60" />
+
+        {/* back button */}
+        <button
+          onClick={handleBack}
+          className="absolute top-4 left-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"
+          aria-label="Go back"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        {/* step dots */}
+        <div className="absolute top-5 right-4 flex items-center gap-1.5">
+          {[1, 2, 3].map((n) => (
+            <span
+              key={n}
+              className={`block rounded-full transition-all ${
+                n === 2 ? 'h-2 w-5 bg-white' : 'h-2 w-2 bg-white/40'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* product name & price in back layer */}
+        <div className="absolute bottom-4 left-5 right-5">
+          <p className="text-xs text-white/60 uppercase tracking-widest font-medium">Ordering</p>
+          <h2 className="text-lg font-bold text-white leading-tight">{product.name}</h2>
+        </div>
+      </div>
+
+      {/* ── FRONT LAYER ── elevated summary panel */}
+      <div className="flex flex-1 flex-col rounded-t-3xl bg-white shadow-2xl overflow-hidden"
+        style={{ marginTop: '-20px' }}
+      >
+        {/* drag handle bar */}
+        <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
+          <div className="h-1 w-10 rounded-full bg-gray-200" />
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 pb-32">
+          <h2 className="text-base font-bold text-gray-900 mb-5">Order Summary</h2>
+
+          {/* ── line items ── */}
+          <div className="flex flex-col gap-3">
+            <LineItem label={product.name} amount={productAmount} />
+            <LineItem label="Base fee" amount={BASE_FEE} muted />
+            <LineItem label="Delivery fee" amount={DELIVERY_FEE} muted />
+          </div>
+
+          {/* divider */}
+          <div className="my-4 border-t border-dashed border-gray-200" />
+
+          {/* total */}
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-gray-900">Total</span>
+            <span className="text-lg font-bold text-gray-900">{fmt(total)}</span>
+          </div>
+
+          {/* ── card summary ── */}
+          <div className="mt-6 rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2 font-medium">Charging to</p>
+            <div className="flex items-center gap-3">
+              {brand === 'visa' && <VisaChip />}
+              {brand === 'mastercard' && <McChip />}
+              {!brand && (
+                <div className="h-5 w-8 rounded bg-gray-300" />
+              )}
+              <div>
+                <p className="text-sm font-semibold text-gray-900">
+                  •••• •••• •••• {lastFour}
+                </p>
+                <p className="text-xs text-gray-400 capitalize">
+                  {brand ?? 'card'} · expires {card.expMonth.padStart(2,'0')}/{card.expYear}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* ── delivery summary ── */}
+          <div className="mt-3 rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2 font-medium">Delivering to</p>
+            <p className="text-sm font-semibold text-gray-900">{delivery.recipientName}</p>
+            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+              {delivery.address}, {delivery.city}, {delivery.department}
+            </p>
+          </div>
+        </div>
+
+        {/* ── sticky pay button ── */}
+        <div className="flex-shrink-0 border-t border-gray-100 bg-white px-5 pb-safe pb-6 pt-4">
+          <button
+            onClick={handleConfirm}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-4 text-sm font-semibold text-white transition active:scale-95 hover:bg-gray-800"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Confirm payment · {fmt(total)}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LineItem({
+  label,
+  amount,
+  muted = false,
+}: {
+  label: string;
+  amount: number;
+  muted?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className={`text-sm ${muted ? 'text-gray-400' : 'text-gray-700'}`}>{label}</span>
+      <span className={`text-sm font-medium ${muted ? 'text-gray-400' : 'text-gray-700'}`}>
+        {fmt(amount)}
+      </span>
     </div>
   );
 }
