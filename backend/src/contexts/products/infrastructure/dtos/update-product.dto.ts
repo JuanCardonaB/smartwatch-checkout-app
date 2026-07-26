@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayNotEmpty, IsArray, IsInt, IsNotEmpty, IsString, IsUrl, Min } from 'class-validator';
 
-export class CreateProductDto {
+export class UpdateProductDto {
   @ApiProperty({ example: 'Smartwatch Pro X1' })
   @IsString()
   @IsNotEmpty()
@@ -27,7 +27,8 @@ export class CreateProductDto {
   })
   @IsArray()
   @ArrayNotEmpty()
-  @IsUrl({}, { each: true })
+  // require_tld: false so locally-served upload URLs (http://localhost:3000/...) are accepted
+  @IsUrl({ require_tld: false }, { each: true })
   imageUrls: string[];
 
   @ApiProperty({ example: 10 })

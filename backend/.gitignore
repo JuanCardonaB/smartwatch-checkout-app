@@ -6,6 +6,10 @@
 # runtime data (JSON file storage)
 /data
 
+# uploaded product images (keep the folder, ignore its contents)
+/uploads/*
+!/uploads/.gitkeep
+
 # Claude Code memory
 /.claude
 

@@ -1,15 +1,23 @@
 import 'dotenv/config';
+import * as fs from 'fs';
+import { join } from 'path';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { UPLOADS_DIR, UPLOADS_ROUTE } from './contexts/products/infrastructure/uploads.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Ensure the uploads folder exists and serve it as static files
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  app.useStaticAssets(UPLOADS_DIR, { prefix: `${UPLOADS_ROUTE}/` });
 
   app.enableCors({
     origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 

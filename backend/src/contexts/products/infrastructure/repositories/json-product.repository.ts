@@ -10,7 +10,8 @@ const DATA_PATH = path.join(process.cwd(), 'data', 'products.json');
 export class JsonProductRepository implements ProductRepository {
   private read(): Product[] {
     if (!fs.existsSync(DATA_PATH)) return [];
-    const raw = fs.readFileSync(DATA_PATH, 'utf-8');
+    const raw = fs.readFileSync(DATA_PATH, 'utf-8').trim();
+    if (!raw) return [];
     const parsed = JSON.parse(raw) as Array<{
       id: string;
       name: string;

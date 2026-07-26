@@ -28,6 +28,10 @@ export class JsonCustomerRepository implements CustomerRepository {
     fs.writeFileSync(DATA_PATH, JSON.stringify(customers, null, 2), 'utf-8');
   }
 
+  async findAll(): Promise<Customer[]> {
+    return this.read().slice().reverse();
+  }
+
   async findById(id: string): Promise<Customer | null> {
     return this.read().find((c) => c.id === id) ?? null;
   }

@@ -19,6 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateTransactionUseCase } from '../../application/use-cases/create-transaction.use-case';
 import { GetTransactionUseCase } from '../../application/use-cases/get-transaction.use-case';
+import { ListTransactionsUseCase } from '../../application/use-cases/list-transactions.use-case';
 import { CreateTransactionDto } from '../dtos/create-transaction.dto';
 import { TransactionResponseDto } from '../dtos/transaction-response.dto';
 
@@ -28,7 +29,16 @@ export class TransactionsController {
   constructor(
     private readonly createTransaction: CreateTransactionUseCase,
     private readonly getTransaction: GetTransactionUseCase,
+    private readonly listTransactions: ListTransactionsUseCase,
   ) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List all transactions', description: 'Returns all transactions ordered by most recent first.' })
+  @ApiOkResponse({ type: [TransactionResponseDto], description: 'List of transactions' })
+  async findAll(): Promise<TransactionResponseDto[]> {
+    const transactions = await this.listTransactions.execute();
+    return transactions.map((t) => TransactionResponseDto.fromEntity(t));
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

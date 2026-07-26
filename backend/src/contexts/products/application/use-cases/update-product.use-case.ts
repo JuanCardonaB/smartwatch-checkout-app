@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Product } from '../../domain/product.entity';
 import { ProductRepository } from '../../domain/product.repository';
-import { ProductId } from '../../domain/value-objects/product-id.vo';
 import { ProductPrice } from '../../domain/value-objects/product-price.vo';
 import { Result, ok, err } from '../../../../shared/result';
 
-export interface CreateProductCommand {
+export interface UpdateProductCommand {
+  id: string;
   name: string;
   description: string;
   priceInCents: number;
@@ -14,10 +14,13 @@ export interface CreateProductCommand {
 }
 
 @Injectable()
-export class CreateProductUseCase {
+export class UpdateProductUseCase {
   constructor(private readonly repository: ProductRepository) {}
 
-  async execute(command: CreateProductCommand): Promise<Result<Product>> {
+  async execute(command: UpdateProductCommand): Promise<Result<Product>> {
+    const existing = await this.repository.findById(command.id);
+    if (!existing) return err('Product not found');
+
     try {
       ProductPrice.from(command.priceInCents);
     } catch {
@@ -26,17 +29,17 @@ export class CreateProductUseCase {
 
     if (command.stock < 0) return err('Stock cannot be negative');
 
-    const product = new Product(
-      ProductId.generate().value,
+    const updated = new Product(
+      existing.id,
       command.name.trim(),
       command.description.trim(),
       command.priceInCents,
       command.imageUrls.map((url) => url.trim()),
       command.stock,
-      new Date(),
+      existing.createdAt,
     );
 
-    const saved = await this.repository.save(product);
+    const saved = await this.repository.update(updated);
     return ok(saved);
   }
 }

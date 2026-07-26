@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { ProductsController } from './products.controller';
-import { CreateProductUseCase } from '../../application/use-cases/create-product.use-case';
 import { GetProductUseCase } from '../../application/use-cases/get-product.use-case';
 import { ListProductsUseCase } from '../../application/use-cases/list-products.use-case';
+import { UpdateProductUseCase } from '../../application/use-cases/update-product.use-case';
 import { UpdateStockUseCase } from '../../application/use-cases/update-stock.use-case';
 import { Product } from '../../domain/product.entity';
 import { ok, err } from '../../../../shared/result';
@@ -20,58 +20,27 @@ const mockProduct = new Product(
 
 describe('ProductsController', () => {
   let controller: ProductsController;
-  let createProduct: jest.Mocked<CreateProductUseCase>;
   let getProduct: jest.Mocked<GetProductUseCase>;
   let listProducts: jest.Mocked<ListProductsUseCase>;
+  let updateProduct: jest.Mocked<UpdateProductUseCase>;
   let updateStock: jest.Mocked<UpdateStockUseCase>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ProductsController],
       providers: [
-        { provide: CreateProductUseCase, useValue: { execute: jest.fn() } },
         { provide: GetProductUseCase, useValue: { execute: jest.fn() } },
         { provide: ListProductsUseCase, useValue: { execute: jest.fn() } },
+        { provide: UpdateProductUseCase, useValue: { execute: jest.fn() } },
         { provide: UpdateStockUseCase, useValue: { execute: jest.fn() } },
       ],
     }).compile();
 
     controller = module.get(ProductsController);
-    createProduct = module.get(CreateProductUseCase);
     getProduct = module.get(GetProductUseCase);
     listProducts = module.get(ListProductsUseCase);
+    updateProduct = module.get(UpdateProductUseCase);
     updateStock = module.get(UpdateStockUseCase);
-  });
-
-  describe('POST /products', () => {
-    it('returns 201 with product data on success', async () => {
-      createProduct.execute.mockResolvedValue(ok(mockProduct));
-
-      const result = await controller.create({
-        name: 'Smartwatch Pro X1',
-        description: 'desc',
-        priceInCents: 29900000,
-        imageUrls: ['https://img.com'],
-        stock: 10,
-      });
-
-      expect(result.id).toBe('uuid-1');
-      expect(result.stock).toBe(10);
-    });
-
-    it('throws 400 when use case returns error', async () => {
-      createProduct.execute.mockResolvedValue(err('Price must be a positive integer in cents'));
-
-      await expect(
-        controller.create({
-          name: 'X',
-          description: 'X',
-          priceInCents: 0,
-          imageUrls: ['https://img.com'],
-          stock: 1,
-        }),
-      ).rejects.toThrow(new HttpException('Price must be a positive integer in cents', HttpStatus.BAD_REQUEST));
-    });
   });
 
   describe('GET /products', () => {
@@ -105,6 +74,41 @@ describe('ProductsController', () => {
 
       await expect(controller.findOne('bad-id')).rejects.toThrow(
         new HttpException('Product not found', HttpStatus.NOT_FOUND),
+      );
+    });
+  });
+
+  describe('PUT /products/:id', () => {
+    const updateDto = {
+      name: 'Updated Watch',
+      description: 'updated desc',
+      priceInCents: 19900000,
+      imageUrls: ['https://img.com/new.png'],
+      stock: 5,
+    };
+
+    it('returns updated product on success', async () => {
+      updateProduct.execute.mockResolvedValue(ok(mockProduct));
+
+      const result = await controller.update('uuid-1', updateDto);
+
+      expect(result.id).toBe('uuid-1');
+      expect(updateProduct.execute).toHaveBeenCalledWith({ id: 'uuid-1', ...updateDto });
+    });
+
+    it('throws 404 when product is not found', async () => {
+      updateProduct.execute.mockResolvedValue(err('Product not found'));
+
+      await expect(controller.update('bad-id', updateDto)).rejects.toThrow(
+        new HttpException('Product not found', HttpStatus.NOT_FOUND),
+      );
+    });
+
+    it('throws 400 when validation fails', async () => {
+      updateProduct.execute.mockResolvedValue(err('Price must be a positive integer in cents'));
+
+      await expect(controller.update('uuid-1', updateDto)).rejects.toThrow(
+        new HttpException('Price must be a positive integer in cents', HttpStatus.BAD_REQUEST),
       );
     });
   });

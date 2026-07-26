@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CreateTransactionUseCase } from '../application/use-cases/create-transaction.use-case';
 import { GetTransactionUseCase } from '../application/use-cases/get-transaction.use-case';
+import { ListTransactionsUseCase } from '../application/use-cases/list-transactions.use-case';
 import { PaymentGatewayPort } from '../application/ports/payment-gateway.port';
 import { TransactionRepository } from '../domain/transaction.repository';
 import { WompiAdapter } from './adapters/wompi.adapter';
@@ -16,6 +17,7 @@ import { DeliveriesModule } from '../../deliveries/infrastructure/deliveries.mod
   providers: [
     CreateTransactionUseCase,
     GetTransactionUseCase,
+    ListTransactionsUseCase,
     { provide: TransactionRepository, useClass: JsonTransactionRepository },
     { provide: PaymentGatewayPort, useClass: WompiAdapter },
   ],
