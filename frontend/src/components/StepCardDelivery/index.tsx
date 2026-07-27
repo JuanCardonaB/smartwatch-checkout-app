@@ -249,7 +249,7 @@ export default function StepCardDelivery() {
     if (!customer.name.trim()) e.custName = "Required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email))
       e.custEmail = "Enter a valid email";
-    if (!customer.phone.replace(/\D/g, "")) e.custPhone = "Required";
+    if (customer.phone.replace(/\D/g, "").length < 7) e.custPhone = "Min 7 digits";
     const rawCard = card.number.replace(/\s/g, "");
     if (rawCard.length !== 16) e.cardNumber = "Must be 16 digits";
     if (!brand) e.cardBrand = "Only VISA and Mastercard accepted";
@@ -262,7 +262,7 @@ export default function StepCardDelivery() {
     if (!card.expYear || year < thisYear) e.expYear = "Invalid year";
     if (!/^\d{3,4}$/.test(card.cvc)) e.cvc = "3–4 digits";
     if (!delivery.recipientName.trim()) e.delName = "Required";
-    if (!delivery.phone.trim()) e.delPhone = "Required";
+    if (delivery.phone.replace(/\D/g, "").length < 7) e.delPhone = "Min 7 digits";
     if (!delivery.address.trim()) e.delAddress = "Required";
     if (!delivery.city.trim()) e.delCity = "Required";
     if (!delivery.department.trim()) e.delDept = "Required";
