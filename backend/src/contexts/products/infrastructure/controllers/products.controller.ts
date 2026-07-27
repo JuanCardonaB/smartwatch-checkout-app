@@ -9,15 +9,11 @@ import {
   Patch,
   Put,
   Post,
-  Req,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { randomUUID } from 'crypto';
-import type { Request } from 'express';
+import { memoryStorage } from 'multer';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -36,12 +32,8 @@ import { UpdateStockUseCase } from '../../application/use-cases/update-stock.use
 import { UpdateProductDto } from '../dtos/update-product.dto';
 import { UpdateStockDto } from '../dtos/update-stock.dto';
 import { ProductResponseDto } from '../dtos/product-response.dto';
-import {
-  ALLOWED_IMAGE_MIME,
-  MAX_UPLOAD_BYTES,
-  UPLOADS_DIR,
-  UPLOADS_ROUTE,
-} from '../uploads.config';
+import { ALLOWED_IMAGE_MIME, MAX_UPLOAD_BYTES } from '../uploads.config';
+import { CloudinaryService } from '../cloudinary.service';
 
 @ApiTags('products')
 @Controller('products')
@@ -51,6 +43,7 @@ export class ProductsController {
     private readonly getProduct: GetProductUseCase,
     private readonly updateProduct: UpdateProductUseCase,
     private readonly updateStock: UpdateStockUseCase,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
   @Get()
@@ -64,12 +57,7 @@ export class ProductsController {
   @Post('images')
   @UseInterceptors(
     FilesInterceptor('files', 10, {
-      storage: diskStorage({
-        destination: UPLOADS_DIR,
-        filename: (_req, file, cb) => {
-          cb(null, `${randomUUID()}${extname(file.originalname).toLowerCase()}`);
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (_req, file, cb) => {
         if (!ALLOWED_IMAGE_MIME.test(file.mimetype)) {
           cb(new BadRequestException('Only image files are allowed'), false);
@@ -82,7 +70,7 @@ export class ProductsController {
   )
   @ApiOperation({
     summary: 'Upload product images',
-    description: 'Uploads one or more image files and returns their public URLs.',
+    description: 'Uploads one or more image files to Cloudinary and returns their public URLs.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -93,18 +81,18 @@ export class ProductsController {
       },
     },
   })
-  @ApiOkResponse({ description: 'Uploaded image URLs', schema: { example: { urls: ['http://localhost:3000/uploads/uuid.png'] } } })
+  @ApiOkResponse({ description: 'Uploaded image URLs', schema: { example: { urls: ['https://res.cloudinary.com/demo/image/upload/products/uuid.png'] } } })
   @ApiBadRequestResponse({ description: 'No files or invalid file type' })
-  uploadImages(
+  async uploadImages(
     @UploadedFiles() files: Express.Multer.File[],
-    @Req() req: Request,
-  ): { urls: string[] } {
+  ): Promise<{ urls: string[] }> {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files were uploaded');
     }
-    const base = `${req.protocol}://${req.get('host')}`;
-    const urls = files.map((file) => `${base}${UPLOADS_ROUTE}/${file.filename}`);
-    return { urls };
+    const results = await Promise.all(
+      files.map((file) => this.cloudinary.uploadBuffer(file.buffer)),
+    );
+    return { urls: results.map((r) => r.secure_url) };
   }
 
   @Get(':id')
