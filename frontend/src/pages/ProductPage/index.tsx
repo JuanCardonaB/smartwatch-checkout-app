@@ -109,7 +109,7 @@ export default function ProductPage() {
               key={i}
               src={src}
               alt={`${product.name} ${i + 1}`}
-              className={`absolute inset-0 h-full w-full object-contain object-top transition-opacity duration-500 ${
+              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
                 i === current ? "opacity-100" : "opacity-0"
               }`}
               draggable={false}
@@ -197,7 +197,7 @@ export default function ProductPage() {
                 key={i}
                 src={src}
                 alt={`${product.name} ${i + 1}`}
-                className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${
+                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
                   i === current ? "opacity-100" : "opacity-0"
                 }`}
                 draggable={false}
