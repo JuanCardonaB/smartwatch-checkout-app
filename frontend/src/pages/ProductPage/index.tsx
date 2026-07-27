@@ -93,10 +93,13 @@ export default function ProductPage() {
       {/* ══════════════════════════════════════════
           MOBILE layout (hidden on md+)
       ══════════════════════════════════════════ */}
-      <div className="md:hidden relative h-screen w-full overflow-hidden">
-        {/* image background + swipe */}
+      <div className="md:hidden fixed inset-0 flex flex-col overflow-hidden">
+        {/* image area — sized to exactly the space above the sheet */}
         <div
-          className="fixed inset-0 select-none bg-gray-100"
+          className={`relative bg-gray-100 select-none overflow-hidden shrink-0 ${
+            isDragging ? "" : "transition-[height] duration-300 ease-out"
+          }`}
+          style={{ height: `${100 - sheetHeight}vh` }}
           onTouchStart={(e) => onSwipeStart(e.touches[0].clientX)}
           onTouchEnd={(e) =>
             onSwipeEnd(e.changedTouches[0].clientX, images.length)
@@ -117,10 +120,7 @@ export default function ProductPage() {
               fetchPriority={i === 0 ? "high" : "low"}
             />
           ))}
-          <div
-            className="absolute left-1/2 -translate-x-1/2 flex gap-1 z-10"
-            style={{ bottom: "42%" }}
-          >
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1 z-10">
             {images.map((_, i) => (
               <button
                 key={i}
@@ -141,7 +141,7 @@ export default function ProductPage() {
         {/* bottom sheet */}
         <div
           style={{ height: `${sheetHeight}vh` }}
-          className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl flex flex-col ${
+          className={`bg-white rounded-t-3xl shadow-2xl flex flex-col shrink-0 ${
             isDragging ? "" : "transition-[height] duration-300 ease-out"
           }`}
         >
