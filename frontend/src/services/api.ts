@@ -15,7 +15,14 @@ export interface ProductInput {
 
 export const productsApi = {
   getAll: (): Promise<Product[]> =>
-    api.get<Product[]>('/products').then((r) => r.data),
+    api.get<Product[]>('/products').then((r) =>
+      r.data.map((p) => ({
+        ...p,
+        imageUrls: p.imageUrls?.map((url) =>
+          url.startsWith('http://') ? url.replace('http://', 'https://') : url
+        ) ?? [],
+      }))
+    ),
 
   getById: (id: string): Promise<Product> =>
     api.get<Product>(`/products/${id}`).then((r) => r.data),

@@ -118,17 +118,22 @@ export default function ProductPage() {
             />
           ))}
           <div
-            className="absolute left-1/2 -translate-x-1/2 flex gap-2 z-10"
+            className="absolute left-1/2 -translate-x-1/2 flex gap-1 z-10"
             style={{ bottom: "42%" }}
           >
             {images.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setActiveImage(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i === current ? "bg-white w-5" : "bg-white/55 w-2"
-                }`}
-              />
+                aria-label={`Slide ${i + 1}`}
+                className="flex items-center justify-center min-h-6 min-w-6"
+              >
+                <span
+                  className={`block h-2 rounded-full transition-all duration-300 ${
+                    i === current ? "bg-white w-5" : "bg-white/55 w-2"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </div>
@@ -248,15 +253,20 @@ export default function ProductPage() {
             )}
 
             {/* dots */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-1">
               {images.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setActiveImage(i)}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    i === current ? "bg-white w-6" : "bg-white/50 w-2"
-                  }`}
-                />
+                  aria-label={`Slide ${i + 1}`}
+                  className="flex items-center justify-center min-h-6 min-w-6"
+                >
+                  <span
+                    className={`block h-2 rounded-full transition-all duration-300 ${
+                      i === current ? "bg-white w-6" : "bg-white/50 w-2"
+                    }`}
+                  />
+                </button>
               ))}
             </div>
           </div>
