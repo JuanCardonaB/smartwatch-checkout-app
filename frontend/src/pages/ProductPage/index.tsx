@@ -94,12 +94,11 @@ export default function ProductPage() {
           MOBILE layout (hidden on md+)
       ══════════════════════════════════════════ */}
       <div className="md:hidden fixed inset-0 flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
-        {/* image area — sized to exactly the space above the sheet */}
+        {/* image area — flex-1 so it takes whatever space the sheet doesn't */}
         <div
-          className={`relative bg-gray-100 select-none overflow-hidden shrink-0 ${
-            isDragging ? "" : "transition-[height] duration-300 ease-out"
+          className={`relative bg-gray-100 select-none overflow-hidden flex-1 min-h-0 ${
+            isDragging ? "" : "transition-[flex] duration-300 ease-out"
           }`}
-          style={{ height: `${100 - sheetHeight}vh` }}
           onTouchStart={(e) => onSwipeStart(e.touches[0].clientX)}
           onTouchEnd={(e) =>
             onSwipeEnd(e.changedTouches[0].clientX, images.length)
@@ -140,7 +139,7 @@ export default function ProductPage() {
 
         {/* bottom sheet */}
         <div
-          style={{ height: `${sheetHeight}vh` }}
+          style={{ height: `${sheetHeight}dvh` }}
           className={`bg-white rounded-t-3xl shadow-2xl flex flex-col shrink-0 ${
             isDragging ? "" : "transition-[height] duration-300 ease-out"
           }`}
