@@ -113,6 +113,8 @@ export default function ProductPage() {
                 i === current ? "opacity-100" : "opacity-0"
               }`}
               draggable={false}
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchPriority={i === 0 ? "high" : "low"}
             />
           ))}
           <div
@@ -194,6 +196,8 @@ export default function ProductPage() {
                   i === current ? "opacity-100" : "opacity-0"
                 }`}
                 draggable={false}
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchPriority={i === 0 ? "high" : "low"}
               />
             ))}
 

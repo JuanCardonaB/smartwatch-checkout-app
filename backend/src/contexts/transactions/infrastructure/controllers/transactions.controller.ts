@@ -7,7 +7,9 @@ import {
   HttpStatus,
   Param,
   Post,
+  UseGuards,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
@@ -24,6 +26,7 @@ import { CreateTransactionDto } from '../dtos/create-transaction.dto';
 import { TransactionResponseDto } from '../dtos/transaction-response.dto';
 
 @ApiTags('transactions')
+@UseGuards(ThrottlerGuard)
 @Controller('transactions')
 export class TransactionsController {
   constructor(
