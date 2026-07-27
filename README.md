@@ -422,11 +422,11 @@ smartwatch-checkout-app/
 │   │       ├── customers/
 │   │       │   ├── application/use-cases/ # CreateCustomer, GetCustomer, UpsertCustomer
 │   │       │   ├── domain/                # Customer entity, CustomerEmail VO
-│   │       │   └── infrastructure/        # Controller, JSON repository, DTOs
+│   │       │   └── infrastructure/        # Controller, TypeORM repository, DTOs
 │   │       ├── deliveries/
 │   │       │   ├── application/use-cases/ # CreateDelivery, GetDelivery
 │   │       │   ├── domain/                # Delivery entity, DeliveryId VO
-│   │       │   └── infrastructure/        # Controller, JSON repository, DTOs
+│   │       │   └── infrastructure/        # Controller, TypeORM repository, DTOs
 │   │       ├── products/
 │   │       │   ├── application/use-cases/ # GetProduct, UpdateStock, ListProducts
 │   │       │   ├── domain/                # Product entity, ProductId VO
