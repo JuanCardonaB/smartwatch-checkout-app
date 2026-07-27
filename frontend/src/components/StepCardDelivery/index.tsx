@@ -365,10 +365,18 @@ export default function StepCardDelivery() {
             inputMode="numeric"
             maxLength={2}
             value={card.expMonth}
-            onChange={(e) =>
+            onChange={(e) => {
+              const raw = e.target.value.replace(/\D/g, "").slice(0, 2);
+              const formatted =
+                raw.length === 1 && parseInt(raw) >= 2
+                  ? raw.padStart(2, "0")
+                  : raw;
+              setLocalCard((p) => ({ ...p, expMonth: formatted }));
+            }}
+            onBlur={() =>
               setLocalCard((p) => ({
                 ...p,
-                expMonth: e.target.value.replace(/\D/g, "").slice(0, 2),
+                expMonth: p.expMonth.padStart(2, "0"),
               }))
             }
           />

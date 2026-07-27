@@ -52,6 +52,7 @@ export const transactionsApi = {
       card: {
         ...payload.card,
         number: stripSpaces(payload.card.number),
+        expMonth: payload.card.expMonth.padStart(2, '0'),
         expYear: payload.card.expYear.length === 2 ? `20${payload.card.expYear}` : payload.card.expYear,
       },
       delivery: {
