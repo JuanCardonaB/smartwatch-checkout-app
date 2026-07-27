@@ -9,6 +9,7 @@ import type {
   CheckoutStep,
 } from "../../types";
 import { productsApi, transactionsApi } from "../../services/api";
+import { updateProduct as adminUpdateProduct } from "./admin.slice";
 
 interface CheckoutState {
   product: Product | null;
@@ -40,7 +41,13 @@ function loadFromStorage(): Partial<CheckoutState> {
 
 function saveToStorage(state: CheckoutState): void {
   try {
-    const { card: _card, loading: _loading, error: _error, ...toSave } = state;
+    // Only persist user-entered data. Product is server state — always re-fetched on load.
+    const toSave = {
+      step: state.step,
+      customer: state.customer,
+      delivery: state.delivery,
+      transaction: state.transaction,
+    };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   } catch {
     // storage quota exceeded — silently ignore
@@ -166,6 +173,10 @@ const checkoutSlice = createSlice({
         state.error = action.payload as string;
         state.step = 4;
         saveToStorage(state);
+      })
+      // Keep checkout in sync when admin saves the product
+      .addCase(adminUpdateProduct.fulfilled, (state, action) => {
+        state.product = action.payload;
       });
   },
 });
