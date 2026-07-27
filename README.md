@@ -12,6 +12,7 @@ Full-stack checkout application for purchasing a smartwatch using a payment gate
 - [Getting Started](#getting-started)
 - [API Documentation](#api-documentation)
 - [Environment Variables](#environment-variables)
+- [Security](#security)
 - [Test Results](#test-results)
 - [Project Structure](#project-structure)
 - [Deployed App](#deployed-app)
@@ -298,6 +299,36 @@ This single endpoint orchestrates the full checkout:
 | `WOMPI_EVENTS_KEY` | Webhook events key |
 
 Copy `.env.example` to `.env` and fill in your credentials. **Never commit `.env`.**
+
+---
+
+## Security
+
+### Backend
+
+| Mechanism | Details |
+|---|---|
+| `helmet()` | Sets `X-Frame-Options`, `X-Content-Type-Options`, `Strict-Transport-Security`, `Content-Security-Policy`, and more on every API response |
+| CORS | Requests accepted only from the frontend origin (`FRONTEND_URL` env var) |
+| `ValidationPipe` | `whitelist: true` + `forbidNonWhitelisted: true` — unknown fields in request body are rejected with 400 |
+| Rate limiting | `ThrottlerGuard` applied to the `POST /api/transactions` endpoint |
+
+### Frontend
+
+The following headers are set on every response via `vercel.json`:
+
+| Header | Value | Purpose |
+|---|---|---|
+| `X-Frame-Options` | `DENY` | Prevents clickjacking via iframes |
+| `X-Content-Type-Options` | `nosniff` | Stops MIME-type sniffing |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Limits referrer info sent to third parties |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` | Disables browser APIs not used by the app |
+| `Content-Security-Policy` | allowlist-based | Restricts script, style, and connection sources to trusted origins only |
+
+### Sensitive data handling
+
+- Credit card number and CVC are **never stored** in `localStorage` — they exist in Redux state only for the duration of the session.
+- Only the last 4 digits and card brand are persisted after a transaction completes.
 
 ---
 
