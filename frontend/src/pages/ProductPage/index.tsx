@@ -93,7 +93,7 @@ export default function ProductPage() {
       {/* ══════════════════════════════════════════
           MOBILE layout (hidden on md+)
       ══════════════════════════════════════════ */}
-      <div className="md:hidden fixed inset-0 flex flex-col overflow-hidden">
+      <div className="md:hidden fixed inset-0 flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
         {/* image area — sized to exactly the space above the sheet */}
         <div
           className={`relative bg-gray-100 select-none overflow-hidden shrink-0 ${
@@ -163,7 +163,7 @@ export default function ProductPage() {
               {product.description}
             </p>
           </div>
-          <div className="shrink-0 border-t border-gray-100 px-6 pt-3 pb-6 bg-white">
+          <div className="shrink-0 border-t border-gray-100 px-6 pt-3 bg-white" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
             <div className="flex items-center justify-between mb-3">
               <span className="text-2xl font-bold text-gray-900">{price}</span>
               <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
