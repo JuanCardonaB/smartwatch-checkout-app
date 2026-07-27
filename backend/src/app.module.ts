@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomersModule } from './contexts/customers/infrastructure/customers.module';
 import { DeliveriesModule } from './contexts/deliveries/infrastructure/deliveries.module';
@@ -11,6 +12,7 @@ import { DeliveryOrmEntity } from './contexts/deliveries/infrastructure/entities
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 20 }]),
     TypeOrmModule.forRootAsync({
       useFactory: () => ({
         type: 'postgres',
@@ -25,7 +27,7 @@ import { DeliveryOrmEntity } from './contexts/deliveries/infrastructure/entities
           TransactionOrmEntity,
           DeliveryOrmEntity,
         ],
-        synchronize: process.env.NODE_ENV !== 'production',
+        synchronize: process.env.NODE_ENV === 'development',
       }),
     }),
     CustomersModule,

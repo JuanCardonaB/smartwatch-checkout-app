@@ -157,6 +157,7 @@ const checkoutSlice = createSlice({
       .addCase(submitPayment.fulfilled, (state, action) => {
         state.loading = false;
         state.transaction = action.payload;
+        state.card = null;
         state.step = 4;
         saveToStorage(state);
       })

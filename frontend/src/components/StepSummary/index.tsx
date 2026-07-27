@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../store";
 import { setStep, submitPayment } from "../../store/slices/checkout.slice";
 
@@ -85,10 +86,13 @@ export default function StepSummary() {
     (s) => s.checkout,
   );
 
-  if (!product || !card || !customer || !delivery) {
-    dispatch(setStep(2));
-    return null;
-  }
+  const missingData = !product || !card || !customer || !delivery;
+
+  useEffect(() => {
+    if (missingData) dispatch(setStep(2));
+  }, [missingData, dispatch]);
+
+  if (missingData) return null;
 
   const productAmount = product.priceInCents;
   const total = productAmount + BASE_FEE + DELIVERY_FEE;
