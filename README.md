@@ -73,6 +73,7 @@ State is persisted to `localStorage` on every change, except `card` data (securi
 | **Validation** | `class-validator` + `class-transformer` |
 | **Payment gateway** | Wompi sandbox |
 | **Storage** | PostgreSQL 16 |
+| **Image storage** | Cloudinary |
 | **Tests** | Jest 30, `@testing-library/react` |
 
 ---
@@ -189,7 +190,7 @@ docker compose down -v
 ```bash
 cd backend
 npm install
-cp .env.example .env   # fill in Wompi credentials (DB vars are pre-filled)
+cp .env.example .env   # fill in Wompi and Cloudinary credentials (DB vars are pre-filled)
 npm run start:dev
 ```
 
@@ -288,17 +289,48 @@ This single endpoint orchestrates the full checkout:
 
 ## Environment Variables
 
+All variables live in `backend/.env`. Copy `.env.example` to `.env` and fill in your credentials. **Never commit `.env`.**
+
+### Server
+
 | Variable | Description |
 |---|---|
 | `PORT` | HTTP server port (default `3000`) |
 | `FRONTEND_URL` | Allowed CORS origin |
+
+### Database
+
+| Variable | Description |
+|---|---|
+| `DB_HOST` | PostgreSQL host |
+| `DB_PORT` | PostgreSQL port |
+| `DB_USER` | PostgreSQL username |
+| `DB_PASSWORD` | PostgreSQL password |
+| `DB_NAME` | PostgreSQL database name |
+
+### Cloudinary — Image Storage
+
+Product images are uploaded directly to [Cloudinary](https://cloudinary.com) and served via Cloudinary's CDN. The backend never writes image files to disk, which ensures images persist across server restarts and deployments (critical for platforms with ephemeral filesystems such as Render.com's free plan).
+
+| Variable | Description |
+|---|---|
+| `CLOUDINARY_CLOUD_NAME` | Cloud name from your Cloudinary dashboard |
+| `CLOUDINARY_API_KEY` | API key from your Cloudinary dashboard |
+| `CLOUDINARY_API_SECRET` | API secret from your Cloudinary dashboard |
+
+Find these at **Cloudinary Dashboard → Settings → API Keys**.
+
+When the admin removes an image from a product and saves, the image is also deleted from Cloudinary automatically — no orphaned files accumulate.
+
+### Wompi — Payment Gateway
+
+| Variable | Description |
+|---|---|
 | `WOMPI_API_URL` | Payment gateway base URL |
 | `WOMPI_PUBLIC_KEY` | Gateway public key |
 | `WOMPI_PRIVATE_KEY` | Gateway private key |
 | `WOMPI_INTEGRITY_KEY` | Integrity hash key |
 | `WOMPI_EVENTS_KEY` | Webhook events key |
-
-Copy `.env.example` to `.env` and fill in your credentials. **Never commit `.env`.**
 
 ---
 
@@ -398,7 +430,8 @@ smartwatch-checkout-app/
 │   │       ├── products/
 │   │       │   ├── application/use-cases/ # GetProduct, UpdateStock, ListProducts
 │   │       │   ├── domain/                # Product entity, ProductId VO
-│   │       │   └── infrastructure/        # Controller, JSON repository, seed, DTOs
+│   │       │   └── infrastructure/        # Controller, TypeORM repository, seed, DTOs
+│   │       │       └── cloudinary.service.ts  # Upload & delete images via Cloudinary SDK
 │   │       └── transactions/
 │   │           ├── application/
 │   │           │   ├── ports/             # PaymentGatewayPort (abstract)
