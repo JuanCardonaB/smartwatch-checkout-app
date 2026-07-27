@@ -139,13 +139,12 @@ describe('StepResult component', () => {
       expect(screen.getAllByText('Something went wrong').length).toBeGreaterThan(0);
     });
 
-    it('shows error message when error is present and status is ERROR', () => {
+    it('does not expose raw backend error message to the user', () => {
       renderWithProviders({
         transaction: { ...baseTransaction, status: 'ERROR' as const },
         error: 'Payment gateway timeout',
       });
-      const errorMessages = screen.getAllByText('Payment gateway timeout');
-      expect(errorMessages.length).toBeGreaterThan(0);
+      expect(screen.queryByText('Payment gateway timeout')).toBeNull();
     });
   });
 

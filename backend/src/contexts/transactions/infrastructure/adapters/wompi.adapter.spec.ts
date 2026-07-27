@@ -13,6 +13,11 @@ beforeEach(() => {
   process.env.WOMPI_PRIVATE_KEY = 'prv_test_key';
   process.env.WOMPI_INTEGRITY_KEY = INTEGRITY_KEY;
   jest.clearAllMocks();
+  jest.useFakeTimers();
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 const card: CardData = {
@@ -68,12 +73,10 @@ describe('WompiAdapter', () => {
 
   beforeEach(() => {
     adapter = new WompiAdapter();
-    // axios.get is called twice:
-    // 1. getAcceptanceToken() -> merchant endpoint
-    // 2. pollUntilFinal() -> transaction endpoint (since status is APPROVED, not PENDING, it fetches once)
+    // APPROVED status → pollUntilFinal returns immediately (no polling GET)
+    // So only 1 GET (acceptance token) + 2 POSTs (tokenize + transaction)
     mockedAxios.get = jest.fn()
-      .mockResolvedValueOnce(mockMerchantResponse)
-      .mockResolvedValueOnce(mockPollResponse);
+      .mockResolvedValueOnce(mockMerchantResponse);
     mockedAxios.post = jest.fn()
       .mockResolvedValueOnce(mockCardTokenResponse)
       .mockResolvedValueOnce(mockTransactionResponse);
@@ -121,11 +124,10 @@ describe('WompiAdapter', () => {
     expect(txnCall['signature']).toBe(expected);
   });
 
-  it('fetches acceptance token (get) plus polls transaction (get) — 2 get calls total', async () => {
+  it('fetches acceptance token via GET and skips polling when status is immediately APPROVED', async () => {
     await adapter.processPayment({ reference: 'SW-ref', amountInCents: 30700000, card, customerEmail: 'j@e.com' });
 
-    // 1 GET for merchant acceptance token + 1 GET for pollUntilFinal
-    expect(mockedAxios.get).toHaveBeenCalledTimes(2);
+    expect(mockedAxios.get).toHaveBeenCalledTimes(1);
     expect(mockedAxios.post).toHaveBeenCalledTimes(2);
   });
 
@@ -143,8 +145,23 @@ describe('WompiAdapter', () => {
     expect(txnConfig.headers['Authorization']).toBe('Bearer prv_test_key');
   });
 
-  it('uses private key for poll GET request header', async () => {
-    await adapter.processPayment({ reference: 'SW-ref', amountInCents: 30700000, card, customerEmail: 'j@e.com' });
+  it('uses private key for poll GET request header when transaction starts PENDING', async () => {
+    const pendingTxnResponse = {
+      data: { data: { ...mockTransactionResponse.data.data, status: 'PENDING' as const } },
+    };
+    const approvedPollResponse = {
+      data: { data: { ...mockTransactionResponse.data.data, status: 'APPROVED' as const } },
+    };
+    mockedAxios.get = jest.fn()
+      .mockResolvedValueOnce(mockMerchantResponse)
+      .mockResolvedValueOnce(approvedPollResponse);
+    mockedAxios.post = jest.fn()
+      .mockResolvedValueOnce(mockCardTokenResponse)
+      .mockResolvedValueOnce(pendingTxnResponse);
+
+    const promise = adapter.processPayment({ reference: 'SW-ref', amountInCents: 30700000, card, customerEmail: 'j@e.com' });
+    await jest.advanceTimersByTimeAsync(1000);
+    await promise;
 
     const pollConfig = mockedAxios.get.mock.calls[1][1] as { headers: Record<string, string> };
     expect(pollConfig.headers['Authorization']).toBe('Bearer prv_test_key');
@@ -204,13 +221,15 @@ describe('WompiAdapter', () => {
       .mockResolvedValueOnce(mockCardTokenResponse)
       .mockResolvedValueOnce(pendingTxnResponse);
 
-    const result = await adapter.processPayment({
+    const promise = adapter.processPayment({
       reference: 'SW-ref',
       amountInCents: 30700000,
       card,
       customerEmail: 'j@e.com',
     });
+    await jest.advanceTimersByTimeAsync(1000);
+    const result = await promise;
 
     expect(result.status).toBe('APPROVED');
-  }, 15000);
+  });
 });

@@ -349,30 +349,30 @@ npm run test:cov
 ```
 Test Suites: 32 passed, 32 total
 Tests:       188 passed, 188 total
-Time:        ~2.3s
+Time:        ~1s
 ```
 
 | Metric | Coverage |
 |---|---|
-| Statements | **88.68%** |
-| Branches | **79.58%** |
-| Functions | **93.47%** |
-| Lines | **88.74%** |
+| Statements | **91.94%** |
+| Branches | **81.69%** |
+| Functions | **95.55%** |
+| Lines | **91.85%** |
 
 ### Frontend — Jest + Testing Library
 
 ```
 Test Suites: 12 passed, 12 total
 Tests:       151 passed, 151 total
-Time:        ~4.9s
+Time:        ~3.3s
 ```
 
 | Metric | Coverage |
 |---|---|
-| Statements | **90.68%** |
-| Branches | **82.97%** |
-| Functions | **84.09%** |
-| Lines | **92.82%** |
+| Statements | **89.39%** |
+| Branches | **80.80%** |
+| Functions | **81.15%** |
+| Lines | **91.49%** |
 
 ---
 

@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import { TransactionsController } from './transactions.controller';
 import { CreateTransactionUseCase } from '../../application/use-cases/create-transaction.use-case';
 import { GetTransactionUseCase } from '../../application/use-cases/get-transaction.use-case';
@@ -40,7 +41,10 @@ describe('TransactionsController', () => {
         { provide: GetTransactionUseCase, useValue: { execute: jest.fn() } },
         { provide: ListTransactionsUseCase, useValue: { execute: jest.fn() } },
       ],
-    }).compile();
+    })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get(TransactionsController);
     createTransaction = module.get(CreateTransactionUseCase);
