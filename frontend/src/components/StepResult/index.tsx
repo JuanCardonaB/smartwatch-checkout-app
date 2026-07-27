@@ -133,7 +133,7 @@ function ReceiptRow({
 export default function StepResult() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { transaction, product, error } = useAppSelector((s) => s.checkout);
+  const { transaction, product } = useAppSelector((s) => s.checkout);
 
   const status = transaction?.status ?? "ERROR";
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.ERROR;
