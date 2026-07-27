@@ -5,6 +5,7 @@ import { GetProductUseCase } from '../../application/use-cases/get-product.use-c
 import { ListProductsUseCase } from '../../application/use-cases/list-products.use-case';
 import { UpdateProductUseCase } from '../../application/use-cases/update-product.use-case';
 import { UpdateStockUseCase } from '../../application/use-cases/update-stock.use-case';
+import { CloudinaryService } from '../cloudinary.service';
 import { Product } from '../../domain/product.entity';
 import { ok, err } from '../../../../shared/result';
 
@@ -24,6 +25,7 @@ describe('ProductsController', () => {
   let listProducts: jest.Mocked<ListProductsUseCase>;
   let updateProduct: jest.Mocked<UpdateProductUseCase>;
   let updateStock: jest.Mocked<UpdateStockUseCase>;
+  let cloudinary: jest.Mocked<CloudinaryService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -33,6 +35,7 @@ describe('ProductsController', () => {
         { provide: ListProductsUseCase, useValue: { execute: jest.fn() } },
         { provide: UpdateProductUseCase, useValue: { execute: jest.fn() } },
         { provide: UpdateStockUseCase, useValue: { execute: jest.fn() } },
+        { provide: CloudinaryService, useValue: { uploadBuffer: jest.fn() } },
       ],
     }).compile();
 
@@ -41,6 +44,7 @@ describe('ProductsController', () => {
     listProducts = module.get(ListProductsUseCase);
     updateProduct = module.get(UpdateProductUseCase);
     updateStock = module.get(UpdateStockUseCase);
+    cloudinary = module.get(CloudinaryService);
   });
 
   describe('GET /products', () => {
@@ -114,40 +118,29 @@ describe('ProductsController', () => {
   });
 
   describe('POST /products/images', () => {
-    it('returns urls for uploaded files', () => {
+    it('returns cloudinary urls for uploaded files', async () => {
       const files = [
-        { filename: 'img1.png', originalname: 'img1.png', mimetype: 'image/png' },
-        { filename: 'img2.jpg', originalname: 'img2.jpg', mimetype: 'image/jpeg' },
+        { buffer: Buffer.from('img1'), mimetype: 'image/png' },
+        { buffer: Buffer.from('img2'), mimetype: 'image/jpeg' },
       ] as Express.Multer.File[];
 
-      const req = {
-        protocol: 'http',
-        get: (header: string) => (header === 'host' ? 'localhost:3000' : ''),
-      } as unknown as import('express').Request;
+      cloudinary.uploadBuffer
+        .mockResolvedValueOnce({ secure_url: 'https://res.cloudinary.com/demo/products/img1.png' } as any)
+        .mockResolvedValueOnce({ secure_url: 'https://res.cloudinary.com/demo/products/img2.jpg' } as any);
 
-      const result = controller.uploadImages(files, req);
+      const result = await controller.uploadImages(files);
 
       expect(result.urls).toHaveLength(2);
-      expect(result.urls[0]).toBe('http://localhost:3000/uploads/img1.png');
-      expect(result.urls[1]).toBe('http://localhost:3000/uploads/img2.jpg');
+      expect(result.urls[0]).toBe('https://res.cloudinary.com/demo/products/img1.png');
+      expect(result.urls[1]).toBe('https://res.cloudinary.com/demo/products/img2.jpg');
     });
 
-    it('throws 400 when no files uploaded', () => {
-      const req = {
-        protocol: 'http',
-        get: () => 'localhost:3000',
-      } as unknown as import('express').Request;
-
-      expect(() => controller.uploadImages([], req)).toThrow('No files were uploaded');
+    it('throws 400 when no files uploaded', async () => {
+      await expect(controller.uploadImages([])).rejects.toThrow('No files were uploaded');
     });
 
-    it('throws 400 when files is null/undefined', () => {
-      const req = {
-        protocol: 'http',
-        get: () => 'localhost:3000',
-      } as unknown as import('express').Request;
-
-      expect(() => controller.uploadImages(null as unknown as Express.Multer.File[], req)).toThrow('No files were uploaded');
+    it('throws 400 when files is null/undefined', async () => {
+      await expect(controller.uploadImages(null as unknown as Express.Multer.File[])).rejects.toThrow('No files were uploaded');
     });
   });
 

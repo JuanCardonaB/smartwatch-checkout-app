@@ -9,6 +9,7 @@ import { ProductsController } from './controllers/products.controller';
 import { ProductOrmEntity } from './entities/product.orm-entity';
 import { TypeOrmProductRepository } from './repositories/typeorm-product.repository';
 import { ProductsSeed } from './seed/products.seed';
+import { CloudinaryService } from './cloudinary.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ProductOrmEntity])],
@@ -19,6 +20,7 @@ import { ProductsSeed } from './seed/products.seed';
     UpdateProductUseCase,
     UpdateStockUseCase,
     ProductsSeed,
+    CloudinaryService,
     { provide: ProductRepository, useClass: TypeOrmProductRepository },
   ],
   exports: [ProductRepository, UpdateStockUseCase],
