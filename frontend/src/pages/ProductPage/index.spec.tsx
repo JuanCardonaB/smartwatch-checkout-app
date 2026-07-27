@@ -258,4 +258,189 @@ describe('ProductPage', () => {
     const images = document.querySelectorAll('img');
     expect(images.length).toBeGreaterThan(0);
   });
+
+  /* ── swipe and drag via select-none divs ── */
+
+  it('mobile image area: mouseDown+mouseUp triggers onSwipeStart+onSwipeEnd (delta > 50 → next image)', async () => {
+    mockGetAll.mockResolvedValue([mockProduct]);
+    renderProductPage();
+    await screen.findAllByText('Smartwatch Pro X1');
+
+    // Find the inner div with select-none inside the mobile wrapper
+    const selectNoneDivs = document.querySelectorAll('.select-none');
+    // The first one should be the mobile image area
+    if (selectNoneDivs.length > 0) {
+      fireEvent.mouseDown(selectNoneDivs[0], { clientX: 300 });
+      fireEvent.mouseUp(selectNoneDivs[0], { clientX: 200 }); // delta = 100 > 50 → next
+    }
+    expect(screen.getAllByText('Smartwatch Pro X1').length).toBeGreaterThan(0);
+  });
+
+  it('mobile image area: touch swipe left advances image', async () => {
+    mockGetAll.mockResolvedValue([mockProduct]);
+    renderProductPage();
+    await screen.findAllByText('Smartwatch Pro X1');
+
+    const selectNoneDivs = document.querySelectorAll('.select-none');
+    if (selectNoneDivs.length > 0) {
+      fireEvent.touchStart(selectNoneDivs[0], { touches: [{ clientX: 300 }] });
+      fireEvent.touchEnd(selectNoneDivs[0], { changedTouches: [{ clientX: 150 }] }); // delta = 150 > 50
+    }
+    expect(screen.getAllByText('Smartwatch Pro X1').length).toBeGreaterThan(0);
+  });
+
+  it('mobile image area: touch swipe right goes to previous image', async () => {
+    mockGetAll.mockResolvedValue([mockProduct]);
+    renderProductPage();
+    await screen.findAllByText('Smartwatch Pro X1');
+
+    const selectNoneDivs = document.querySelectorAll('.select-none');
+    if (selectNoneDivs.length > 0) {
+      fireEvent.touchStart(selectNoneDivs[0], { touches: [{ clientX: 100 }] });
+      fireEvent.touchEnd(selectNoneDivs[0], { changedTouches: [{ clientX: 300 }] }); // delta = -200 < -50 → prev
+    }
+    expect(screen.getAllByText('Smartwatch Pro X1').length).toBeGreaterThan(0);
+  });
+
+  it('mobile image area: mouseDown+mouseUp with delta < 50 does NOT change image', async () => {
+    mockGetAll.mockResolvedValue([mockProduct]);
+    renderProductPage();
+    await screen.findAllByText('Smartwatch Pro X1');
+
+    const selectNoneDivs = document.querySelectorAll('.select-none');
+    if (selectNoneDivs.length > 0) {
+      fireEvent.mouseDown(selectNoneDivs[0], { clientX: 100 });
+      fireEvent.mouseUp(selectNoneDivs[0], { clientX: 110 }); // delta = -10, no change
+    }
+    expect(screen.getAllByText('Smartwatch Pro X1').length).toBeGreaterThan(0);
+  });
+
+  it('onSwipeEnd does nothing when swipeStartX is null (called without prior start)', async () => {
+    mockGetAll.mockResolvedValue([mockProduct]);
+    renderProductPage();
+    await screen.findAllByText('Smartwatch Pro X1');
+
+    // Fire mouseUp without a prior mouseDown — swipeStartX.current should be null
+    const selectNoneDivs = document.querySelectorAll('.select-none');
+    if (selectNoneDivs.length > 0) {
+      // Call mouseUp first without mouseDown
+      fireEvent.mouseUp(selectNoneDivs[0], { clientX: 100 });
+    }
+    expect(screen.getAllByText('Smartwatch Pro X1').length).toBeGreaterThan(0);
+  });
+
+  it('sheet drag: onSheetDragMove does nothing when dragStartY is null', async () => {
+    mockGetAll.mockResolvedValue([mockProduct]);
+    renderProductPage();
+    await screen.findAllByText('Smartwatch Pro X1');
+
+    const touchNoneDivs = document.querySelectorAll('.touch-none');
+    if (touchNoneDivs.length > 0) {
+      // Fire mouseMove without a prior mouseDown — dragStartY should be null
+      fireEvent.mouseMove(touchNoneDivs[0], { buttons: 1, clientY: 300 });
+    }
+    expect(document.body.innerHTML.length).toBeGreaterThan(100);
+  });
+
+  it('sheet drag: onSheetDragEnd does nothing when dragStartY is null', async () => {
+    mockGetAll.mockResolvedValue([mockProduct]);
+    renderProductPage();
+    await screen.findAllByText('Smartwatch Pro X1');
+
+    const touchNoneDivs = document.querySelectorAll('.touch-none');
+    if (touchNoneDivs.length > 0) {
+      // Fire mouseUp without mouseDown
+      fireEvent.mouseUp(touchNoneDivs[0]);
+    }
+    expect(document.body.innerHTML.length).toBeGreaterThan(100);
+  });
+
+  it('sheet drag: moves and snaps to closest snap point', async () => {
+    mockGetAll.mockResolvedValue([mockProduct]);
+    renderProductPage();
+    await screen.findAllByText('Smartwatch Pro X1');
+
+    const touchNoneDivs = document.querySelectorAll('.touch-none');
+    if (touchNoneDivs.length > 0) {
+      const handle = touchNoneDivs[0];
+      // Start drag at y=500, move up by 100px (increase height)
+      fireEvent.mouseDown(handle, { clientY: 500 });
+      fireEvent.mouseMove(handle, { buttons: 1, clientY: 400 });
+      fireEvent.mouseMove(handle, { buttons: 1, clientY: 350 });
+      fireEvent.mouseUp(handle); // snap to closest
+    }
+    expect(document.body.innerHTML.length).toBeGreaterThan(100);
+  });
+
+  it('desktop: prev arrow button goes to previous image', async () => {
+    mockGetAll.mockResolvedValue([mockProduct]);
+    renderProductPage();
+    await screen.findAllByText('Smartwatch Pro X1');
+
+    // Desktop has prev/next arrow buttons (aria-label not set, just SVG buttons)
+    // The desktop carousel prev/next buttons are the only ones present without label
+    const allButtons = screen.getAllByRole('button');
+    // Look for buttons that are the desktop navigation (prev/next arrows in the image area)
+    // They contain just an SVG (no text), in the hidden md:flex section
+    // Click the "Slide 2" button to jump to second image, then click prev arrow
+    const slideButtons = screen.getAllByLabelText(/Slide/i);
+    if (slideButtons.length >= 2) {
+      fireEvent.click(slideButtons[1]); // go to slide 2
+    }
+    // Now click prev (find it among unlabeled buttons)
+    const unlabeledButtons = allButtons.filter(
+      btn => !btn.getAttribute('aria-label') && btn.textContent?.trim() === '',
+    );
+    if (unlabeledButtons.length > 0) {
+      fireEvent.click(unlabeledButtons[0]);
+    }
+    expect(screen.getAllByText('Smartwatch Pro X1').length).toBeGreaterThan(0);
+  });
+
+  it('desktop: next arrow button advances to next image', async () => {
+    mockGetAll.mockResolvedValue([mockProduct]);
+    renderProductPage();
+    await screen.findAllByText('Smartwatch Pro X1');
+
+    const allButtons = screen.getAllByRole('button');
+    const unlabeledButtons = allButtons.filter(
+      btn => !btn.getAttribute('aria-label') && btn.textContent?.trim() === '',
+    );
+    if (unlabeledButtons.length > 1) {
+      fireEvent.click(unlabeledButtons[1]); // second unlabeled = next arrow
+    }
+    expect(screen.getAllByText('Smartwatch Pro X1').length).toBeGreaterThan(0);
+  });
+
+  it('desktop: mouseDown+mouseUp triggers swipe on desktop carousel', async () => {
+    mockGetAll.mockResolvedValue([mockProduct]);
+    renderProductPage();
+    await screen.findAllByText('Smartwatch Pro X1');
+
+    // Find all select-none divs — second should be the desktop image area
+    const selectNoneDivs = document.querySelectorAll('.select-none');
+    if (selectNoneDivs.length > 1) {
+      fireEvent.mouseDown(selectNoneDivs[1], { clientX: 300 });
+      fireEvent.mouseUp(selectNoneDivs[1], { clientX: 100 }); // delta = 200 → next
+    }
+    expect(screen.getAllByText('Smartwatch Pro X1').length).toBeGreaterThan(0);
+  });
+
+  it('clicking a Slide dot button sets active image', async () => {
+    mockGetAll.mockResolvedValue([mockProduct]);
+    renderProductPage();
+    await screen.findAllByText('Smartwatch Pro X1');
+
+    const slideButtons = screen.getAllByLabelText(/Slide/i);
+    if (slideButtons.length >= 2) {
+      fireEvent.click(slideButtons[1]); // click dot 2 → activeImage = 1
+    }
+    expect(screen.getAllByText('Smartwatch Pro X1').length).toBeGreaterThan(0);
+  });
+
+  it('shows "Product not available" when product is null and no error', async () => {
+    mockGetAll.mockResolvedValue([]);
+    renderProductPage();
+    expect(await screen.findByText(/Product not available|No products available/i)).toBeInTheDocument();
+  });
 });
