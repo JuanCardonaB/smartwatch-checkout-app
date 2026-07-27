@@ -113,6 +113,44 @@ describe('ProductsController', () => {
     });
   });
 
+  describe('POST /products/images', () => {
+    it('returns urls for uploaded files', () => {
+      const files = [
+        { filename: 'img1.png', originalname: 'img1.png', mimetype: 'image/png' },
+        { filename: 'img2.jpg', originalname: 'img2.jpg', mimetype: 'image/jpeg' },
+      ] as Express.Multer.File[];
+
+      const req = {
+        protocol: 'http',
+        get: (header: string) => (header === 'host' ? 'localhost:3000' : ''),
+      } as unknown as import('express').Request;
+
+      const result = controller.uploadImages(files, req);
+
+      expect(result.urls).toHaveLength(2);
+      expect(result.urls[0]).toBe('http://localhost:3000/uploads/img1.png');
+      expect(result.urls[1]).toBe('http://localhost:3000/uploads/img2.jpg');
+    });
+
+    it('throws 400 when no files uploaded', () => {
+      const req = {
+        protocol: 'http',
+        get: () => 'localhost:3000',
+      } as unknown as import('express').Request;
+
+      expect(() => controller.uploadImages([], req)).toThrow('No files were uploaded');
+    });
+
+    it('throws 400 when files is null/undefined', () => {
+      const req = {
+        protocol: 'http',
+        get: () => 'localhost:3000',
+      } as unknown as import('express').Request;
+
+      expect(() => controller.uploadImages(null as unknown as Express.Multer.File[], req)).toThrow('No files were uploaded');
+    });
+  });
+
   describe('PATCH /products/:id/stock', () => {
     it('returns updated product on success', async () => {
       const updated = mockProduct.withStock(7);

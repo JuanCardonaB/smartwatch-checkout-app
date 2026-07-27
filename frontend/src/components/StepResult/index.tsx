@@ -133,7 +133,7 @@ function ReceiptRow({
 export default function StepResult() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { transaction, product } = useAppSelector((s) => s.checkout);
+  const { transaction, product, error } = useAppSelector((s) => s.checkout);
 
   const status = transaction?.status ?? "ERROR";
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.ERROR;
@@ -249,6 +249,11 @@ export default function StepResult() {
               <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
                 {cfg.sub}
               </p>
+              {error && status === "ERROR" && (
+                <p className="text-xs text-red-400 font-mono bg-red-50 rounded-lg px-3 py-2 max-w-xs">
+                  {error}
+                </p>
+              )}
             </div>
             <span
               className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest ${cfg.badgeClass}`}
@@ -280,6 +285,11 @@ export default function StepResult() {
                 {cfg.headline}
               </h1>
               <p className="text-sm text-gray-500 leading-relaxed">{cfg.sub}</p>
+              {error && status === "ERROR" && (
+                <p className="text-xs text-red-400 font-mono bg-red-50 rounded-lg px-3 py-2">
+                  {error}
+                </p>
+              )}
             </div>
             <span
               className={`rounded-full px-5 py-2 text-xs font-bold uppercase tracking-widest ${cfg.badgeClass}`}

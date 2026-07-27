@@ -1,7 +1,5 @@
-import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store";
-import { setStep, setTransaction } from "../../store/slices/checkout.slice";
-import type { TransactionResult } from "../../types";
+import { setStep, submitPayment } from "../../store/slices/checkout.slice";
 
 const BASE_FEE = 300000;
 const DELIVERY_FEE = 500000;
@@ -83,8 +81,7 @@ function LineItem({
 
 export default function StepSummary() {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const { product, card, customer, delivery } = useAppSelector(
+  const { product, card, customer, delivery, loading } = useAppSelector(
     (s) => s.checkout,
   );
 
@@ -106,26 +103,7 @@ export default function StepSummary() {
   }
 
   function handleConfirm() {
-    // Mock — will be replaced with real Wompi call
-    const mock: TransactionResult = {
-      id: crypto.randomUUID(),
-      reference: `REF-${Date.now()}`,
-      wompiId: null,
-      customerId: "mock-customer",
-      productId: product!.id,
-      productAmountInCents: productAmount,
-      baseFeeInCents: BASE_FEE,
-      deliveryFeeInCents: DELIVERY_FEE,
-      amountInCents: total,
-      status: "APPROVED",
-      cardLastFour: lastFour,
-      cardBrand: brand,
-      deliveryId: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    dispatch(setTransaction(mock));
-    navigate("/checkout");
+    dispatch(submitPayment());
   }
 
   const stepDots = (dark = false) => (
@@ -182,22 +160,34 @@ export default function StepSummary() {
   const payButton = (
     <button
       onClick={handleConfirm}
-      className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-4 text-sm font-semibold text-white transition active:scale-95 hover:bg-gray-800"
+      disabled={loading}
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-4 text-sm font-semibold text-white transition active:scale-95 hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      <svg
-        className="h-4 w-4"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2.5}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-        />
-      </svg>
-      Confirm payment · {fmt(total)}
+      {loading ? (
+        <svg
+          className="h-4 w-4 animate-spin"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+        </svg>
+      ) : (
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+          />
+        </svg>
+      )}
+      {loading ? "Processing…" : `Confirm payment · ${fmt(total)}`}
     </button>
   );
 
@@ -331,7 +321,7 @@ export default function StepSummary() {
           </div>
 
           {/* ── Right: order summary ── */}
-          <div className="flex-1 flex flex-col">
+          <div id="desktop-summary" className="flex-1 flex flex-col">
             <div className="flex-1 overflow-y-auto px-10 py-8">
               <h2 className="text-xl font-bold text-gray-900 mb-6">
                 Order Summary
