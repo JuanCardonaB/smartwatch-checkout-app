@@ -1,4 +1,5 @@
 import { useState, useId } from "react";
+import PhoneInput from "../PhoneInput";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store";
 import {
@@ -249,7 +250,7 @@ export default function StepCardDelivery() {
     if (!customer.name.trim()) e.custName = "Required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email))
       e.custEmail = "Enter a valid email";
-    if (customer.phone.replace(/\D/g, "").length < 7) e.custPhone = "Min 7 digits";
+    if (customer.phone.replace(/\D/g, "").length < 9) e.custPhone = "Min 7 digits";
     const rawCard = card.number.replace(/\s/g, "");
     if (rawCard.length !== 16) e.cardNumber = "Must be 16 digits";
     if (!brand) e.cardBrand = "Only VISA and Mastercard accepted";
@@ -262,7 +263,7 @@ export default function StepCardDelivery() {
     if (!card.expYear || year < thisYear) e.expYear = "Invalid year";
     if (!/^\d{3,4}$/.test(card.cvc)) e.cvc = "3–4 digits";
     if (!delivery.recipientName.trim()) e.delName = "Required";
-    if (delivery.phone.replace(/\D/g, "").length < 7) e.delPhone = "Min 7 digits";
+    if (delivery.phone.replace(/\D/g, "").length < 9) e.delPhone = "Min 7 digits";
     if (!delivery.address.trim()) e.delAddress = "Required";
     if (!delivery.city.trim()) e.delCity = "Required";
     if (!delivery.department.trim()) e.delDept = "Required";
@@ -309,14 +310,9 @@ export default function StepCardDelivery() {
         />
       </Field>
       <Field label="Phone" error={errors.custPhone}>
-        <input
-          type="tel"
-          className={inputCls}
-          placeholder="+57 300 000 0000"
+        <PhoneInput
           value={customer.phone}
-          onChange={(e) =>
-            setLocalCustomer((p) => ({ ...p, phone: e.target.value }))
-          }
+          onChange={(v) => setLocalCustomer((p) => ({ ...p, phone: v }))}
         />
       </Field>
     </div>
@@ -431,14 +427,9 @@ export default function StepCardDelivery() {
         />
       </Field>
       <Field label="Contact phone" error={errors.delPhone}>
-        <input
-          type="tel"
-          className={inputCls}
-          placeholder="+57 310 000 0000"
+        <PhoneInput
           value={delivery.phone}
-          onChange={(e) =>
-            setLocalDelivery((p) => ({ ...p, phone: e.target.value }))
-          }
+          onChange={(v) => setLocalDelivery((p) => ({ ...p, phone: v }))}
         />
       </Field>
       <Field label="Street address" error={errors.delAddress}>
