@@ -92,7 +92,9 @@ describe('ProductsController', () => {
     };
 
     it('returns updated product on success', async () => {
+      getProduct.execute.mockResolvedValue(ok(mockProduct));
       updateProduct.execute.mockResolvedValue(ok(mockProduct));
+      cloudinary.deleteRemoved = jest.fn().mockResolvedValue(undefined);
 
       const result = await controller.update('uuid-1', updateDto);
 
@@ -101,7 +103,7 @@ describe('ProductsController', () => {
     });
 
     it('throws 404 when product is not found', async () => {
-      updateProduct.execute.mockResolvedValue(err('Product not found'));
+      getProduct.execute.mockResolvedValue(err('Product not found'));
 
       await expect(controller.update('bad-id', updateDto)).rejects.toThrow(
         new HttpException('Product not found', HttpStatus.NOT_FOUND),
@@ -109,7 +111,9 @@ describe('ProductsController', () => {
     });
 
     it('throws 400 when validation fails', async () => {
+      getProduct.execute.mockResolvedValue(ok(mockProduct));
       updateProduct.execute.mockResolvedValue(err('Price must be a positive integer in cents'));
+      cloudinary.deleteRemoved = jest.fn().mockResolvedValue(undefined);
 
       await expect(controller.update('uuid-1', updateDto)).rejects.toThrow(
         new HttpException('Price must be a positive integer in cents', HttpStatus.BAD_REQUEST),
