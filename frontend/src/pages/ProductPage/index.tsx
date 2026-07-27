@@ -96,7 +96,7 @@ export default function ProductPage() {
       <div className="md:hidden relative h-screen w-full overflow-hidden">
         {/* image background + swipe */}
         <div
-          className="fixed inset-0 select-none"
+          className="fixed inset-0 select-none bg-gray-100"
           onTouchStart={(e) => onSwipeStart(e.touches[0].clientX)}
           onTouchEnd={(e) =>
             onSwipeEnd(e.changedTouches[0].clientX, images.length)
@@ -109,7 +109,7 @@ export default function ProductPage() {
               key={i}
               src={src}
               alt={`${product.name} ${i + 1}`}
-              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
+              className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${
                 i === current ? "opacity-100" : "opacity-0"
               }`}
               draggable={false}
@@ -197,7 +197,7 @@ export default function ProductPage() {
                 key={i}
                 src={src}
                 alt={`${product.name} ${i + 1}`}
-                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
+                className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-500 ${
                   i === current ? "opacity-100" : "opacity-0"
                 }`}
                 draggable={false}
