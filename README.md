@@ -71,7 +71,7 @@ State is persisted to `localStorage` on every change, except `card` data (securi
 | **API docs** | Swagger (`@nestjs/swagger`) |
 | **Validation** | `class-validator` + `class-transformer` |
 | **Payment gateway** | Wompi sandbox |
-| **Storage** | JSON files |
+| **Storage** | PostgreSQL 16 |
 | **Tests** | Jest 30, `@testing-library/react` |
 
 ---
@@ -378,7 +378,6 @@ smartwatch-checkout-app/
 │   │               ├── controllers/
 │   │               ├── dtos/
 │   │               └── repositories/
-│   ├── data/                              # JSON storage
 │   └── .env.example
 │
 └── frontend/
@@ -406,4 +405,11 @@ smartwatch-checkout-app/
 
 ## Deployed App
 
-> 🚀 Coming soon — AWS deployment in progress.
+| | URL |
+|---|---|
+| **Frontend** | https://smartwatch-checkout-app.vercel.app |
+| **Backend API** | https://smartwatch-api-abwz.onrender.com/api |
+| **Swagger UI** | https://smartwatch-api-abwz.onrender.com/api/docs |
+| **Admin panel** | https://smartwatch-checkout-app.vercel.app/admin |
+
+> The admin panel provides a lightweight view of products, transactions, and stock — useful for verifying end-to-end behaviour during the review.
