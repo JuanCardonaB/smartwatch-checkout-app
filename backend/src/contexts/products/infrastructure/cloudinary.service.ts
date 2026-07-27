@@ -24,4 +24,20 @@ export class CloudinaryService {
       stream.end(buffer);
     });
   }
+
+  /** Deletes all Cloudinary URLs that are no longer present in the updated list. */
+  async deleteRemoved(previousUrls: string[], newUrls: string[]): Promise<void> {
+    const newSet = new Set(newUrls);
+    const removed = previousUrls.filter(
+      (url) => !newSet.has(url) && url.includes('res.cloudinary.com'),
+    );
+    await Promise.all(removed.map((url) => this.destroyByUrl(url)));
+  }
+
+  private async destroyByUrl(url: string): Promise<void> {
+    // Extract public_id from URL: everything after /upload/[v<digits>/] up to (but not including) the extension
+    const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/);
+    if (!match) return;
+    await cloudinary.uploader.destroy(match[1]);
+  }
 }

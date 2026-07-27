@@ -109,7 +109,7 @@ export class ProductsController {
   @Put(':id')
   @ApiOperation({
     summary: 'Update a product',
-    description: 'Updates all editable fields of a product. Price must be provided in cents (COP).',
+    description: 'Updates all editable fields of a product. Price must be provided in cents (COP). Removed Cloudinary images are deleted from storage.',
   })
   @ApiParam({ name: 'id', description: 'Product UUID', example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' })
   @ApiOkResponse({ type: ProductResponseDto, description: 'Product updated successfully' })
@@ -119,11 +119,17 @@ export class ProductsController {
     @Param('id') id: string,
     @Body() dto: UpdateProductDto,
   ): Promise<ProductResponseDto> {
+    const existing = await this.getProduct.execute(id);
+    if (!existing.ok) throw new HttpException(existing.error, HttpStatus.NOT_FOUND);
+
     const result = await this.updateProduct.execute({ id, ...dto });
     if (!result.ok) {
       const status = result.error === 'Product not found' ? HttpStatus.NOT_FOUND : HttpStatus.BAD_REQUEST;
       throw new HttpException(result.error, status);
     }
+
+    await this.cloudinary.deleteRemoved(existing.value.imageUrls, dto.imageUrls);
+
     return ProductResponseDto.fromEntity(result.value);
   }
 
