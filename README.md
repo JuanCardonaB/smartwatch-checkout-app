@@ -151,19 +151,50 @@ Customer ──< Transaction >── Product
 
 - Node.js >= 18
 - npm >= 9
+- Docker Desktop
 
-### Backend
+### 1. Database (PostgreSQL via Docker)
+
+```bash
+# From the project root
+docker compose up -d
+```
+
+This starts a PostgreSQL 16 container on **port 5433** (mapped to avoid conflicts with local installs).
+
+| Setting | Value |
+|---|---|
+| Host | `localhost` |
+| Port | `5433` |
+| Database | `smartwatch` |
+| Username | `smartwatch` |
+| Password | `smartwatch` |
+
+> Tables are created automatically on first backend start (`synchronize: true` in dev).  
+> The product seed also runs automatically on startup.
+
+To stop the database:
+```bash
+docker compose down
+```
+
+To stop and delete all data:
+```bash
+docker compose down -v
+```
+
+### 2. Backend
 
 ```bash
 cd backend
 npm install
-cp .env.example .env   # fill in credentials
+cp .env.example .env   # fill in Wompi credentials (DB vars are pre-filled)
 npm run start:dev
 ```
 
 Server starts at `http://localhost:3000`. Swagger UI at `http://localhost:3000/api/docs`.
 
-### Frontend
+### 3. Frontend
 
 ```bash
 cd frontend
