@@ -41,8 +41,13 @@ function loadFromStorage(): Partial<CheckoutState> {
 
 function saveToStorage(state: CheckoutState): void {
   try {
-    // product is server state — never persisted; always fetched fresh on load
-    const { card: _card, loading: _loading, error: _error, product: _product, ...toSave } = state;
+    // Only persist user-entered data. Product is server state — always re-fetched on load.
+    const toSave = {
+      step: state.step,
+      customer: state.customer,
+      delivery: state.delivery,
+      transaction: state.transaction,
+    };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   } catch {
     // storage quota exceeded — silently ignore
